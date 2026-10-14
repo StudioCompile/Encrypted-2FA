@@ -13,11 +13,13 @@
 <script>document.documentElement.dataset.theme = localStorage.getItem('vault-theme') || 'dark';</script>
 </head>
 <body data-page="home">
+<div class="home-bg" aria-hidden="true"></div>
 <header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a><nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a href="settings.html">Settings</a><a class="btn btn-primary btn-sm" href="vaults.html">Open vaults</a></nav></header>
 
-<main class="wrap">
+<main class="wrap home">
   <section class="hero">
     <div>
+      <p class="pill"><span></span>Runs 100% in your browser</p>
       <h1>Your 2FA codes and private files, locked on this device.</h1>
       <p class="lead">Vault keeps one-time codes, notes and files in encrypted storage inside your browser. There's no account and no server, so there's nothing to leak.</p>
       <div class="hero-actions">
@@ -25,40 +27,76 @@
         <a class="btn btn-outline btn-lg" href="security.html">How it's protected</a>
       </div>
     </div>
-    <aside class="code-panel" aria-label="Live example code">
-      <div class="who"><strong>Demo account</strong>demo@example.com</div>
-      <div class="big" id="demo-code" aria-live="off">--- ---</div>
-      <div class="meter"><i id="demo-meter"></i></div>
-      <p class="note">This code is real and refreshes every 30 seconds. Your codes are generated the same way, on your device.</p>
+    <aside class="preview" aria-label="Product preview with live codes">
+      <div class="pv-head"><strong>Personal</strong><span class="pv-lock"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Encrypted</span></div>
+      <div class="pv-card" data-secret="JBSWY3DPEHPK3PXP"><div><b>GitHub</b><small>demo@example.com</small></div><code>--- ---</code><i class="meter"><u></u></i></div><div class="pv-card" data-secret="GEZDGNBVGY3TQOJQ"><div><b>Google</b><small>demo@gmail.com</small></div><code>--- ---</code><i class="meter"><u></u></i></div><div class="pv-card" data-secret="MFRGGZDFMZTWQ2LK"><div><b>AWS</b><small>root-account</small></div><code>--- ---</code><i class="meter"><u></u></i></div>
+      <div class="pv-foot"><span>3 codes</span><span>Auto-locks in 05:00</span></div>
     </aside>
   </section>
 
-  <section class="facts">
-    <h2>What happens to your data</h2>
-    <div class="fact-row"><h3>Encrypted before it's saved</h3><p>Everything is sealed with AES-256-GCM. The key is stretched from your password with two chained rounds of PBKDF2, 1,000,000 iterations in total.</p></div>
-    <div class="fact-row"><h3>Stored only in this browser</h3><p>Vaults live in your browser's local storage. Nothing is uploaded, and you can export an encrypted backup file whenever you like.</p></div>
-    <div class="fact-row"><h3>Locks itself</h3><p>After 5 idle minutes, 2 minutes in a background tab, or as soon as you leave the page, the key is wiped from memory.</p></div>
-    <div class="fact-row"><h3>Unlock your way</h3><p>Use a password, a device passkey (fingerprint or Face ID), or both.</p></div>
+  <section class="stats" aria-label="Key facts">
+    <div class="stat"><small>Encryption</small><strong>AES-256-GCM</strong><span>Authenticated, tamper-evident</span></div>
+    <div class="stat"><small>Key stretching</small><strong>1,000,000</strong><span>PBKDF2 iterations, chained</span></div>
+    <div class="stat"><small>Servers</small><strong>0</strong><span>Nothing leaves your device</span></div>
+    <div class="stat"><small>Auto-lock</small><strong>5 min</strong><span>Or instantly on leaving the page</span></div>
   </section>
 
-  <section class="trio" aria-label="Inside every vault">
-    <div><h3>2FA codes</h3><p>Scan a QR code, paste an otpauth link or type a secret. Codes refresh on the interval each service expects.</p></div>
-    <div><h3>Files and notes</h3><p>Store notes and files up to 5 MB. Add an extra passcode to any item for a second lock.</p></div>
-    <div><h3>Sharing</h3><p>Send an encrypted copy of a vault by link. The person you send it to still needs your password.</p></div>
+  <section class="block">
+    <div class="sec-head"><h2>Everything in one encrypted place</h2><p>Codes, notes, files and sharing, each sealed with the same key.</p></div>
+    <div class="features">
+      <article class="feature"><div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h3>2FA codes</h3><p>Scan a QR code, paste an otpauth link or type a secret. Codes refresh on the interval each service expects, with a countdown ring.</p><div class="tile"><span>GitHub</span><code>418 854</code></div></article>
+      <article class="feature"><div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h3>Files and notes</h3><p>Store notes and files up to 5 MB with previews and search. Add an extra passcode to any item for a second lock.</p><div class="tile"><span>passport-scan.pdf</span><em>Extra passcode</em></div></article>
+      <article class="feature"><div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg></div><h3>Share by link</h3><p>Send an encrypted copy of a vault. The recipient still needs your password, and the data never touches a server.</p><div class="tile"><span>vaults.html#import=…</span><em>Encrypted</em></div></article>
+      <article class="feature"><div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3>Password or passkey</h3><p>Unlock with a password, a device passkey (fingerprint or Face ID), or both. Change the method any time.</p><div class="tile"><span>Unlock method</span><em>Password + Passkey</em></div></article>
+    </div>
   </section>
+
+  <section class="block split">
+    <div class="sec-head"><h2>From password to key</h2><p>Your password is never stored. It's stretched through a chain of key derivation steps before anything is encrypted.</p><a class="btn btn-outline btn-sm" href="security.html">Read the details</a></div>
+    <ol class="chain">
+      <li><b>Your password</b><span>Typed, never saved</span></li>
+      <li><b>PBKDF2 · SHA-512</b><span>500,000 iterations</span></li>
+      <li><b>HMAC step</b><span>Binds a purpose tag and random salt</span></li>
+      <li><b>PBKDF2 · SHA-256</b><span>500,000 iterations</span></li>
+      <li class="end"><b>AES-256 key</b><span>Held in memory only while unlocked</span></li>
+    </ol>
+  </section>
+
+  <section class="block">
+    <div class="sec-head"><h2>Start in three steps</h2></div>
+    <ol class="steps">
+      <li><em>1</em><h3>Create a vault</h3><p>Name it and choose a password, a passkey or both.</p></li>
+      <li><em>2</em><h3>Add your codes</h3><p>Scan the QR code a service shows you, or paste its secret.</p></li>
+      <li><em>3</em><h3>Lock and go</h3><p>Vault locks itself. Export a backup so you never lose access.</p></li>
+    </ol>
+  </section>
+
+  <section class="block">
+    <div class="sec-head"><h2>Questions</h2></div>
+    <div class="faq">
+      <details><summary>Where is my data stored?</summary><p>In your browser's local storage, already encrypted. Clearing browser data removes it, so export a backup from Settings.</p></details>
+      <details><summary>What if I forget my password?</summary><p>There is no recovery. Nothing can decrypt a vault without the password, a passkey or a backup you can still open.</p></details>
+      <details><summary>Can I use it on another device?</summary><p>Yes. Share the vault by link or import an exported backup. Passkeys stay on the device they were created on.</p></details>
+      <details><summary>Does Vault work offline?</summary><p>Once loaded, encryption and code generation all happen locally, so no connection is needed to read your codes.</p></details>
+    </div>
+  </section>
+
+  <section class="cta"><div><h2>Keep your second factor yours.</h2><p>Create your first vault in under a minute.</p></div><a class="btn btn-primary btn-lg" href="vaults.html">Open your vaults</a></section>
 </main>
 <footer class="site-footer"><span>Vault runs entirely in your browser. Nothing is uploaded.</span><nav><a href="vaults.html">Vaults</a><a href="security.html">Security</a><a href="settings.html">Settings</a></nav></footer>
 
 <script src="js/totp.js"></script>
 <script>
-(async () => {
-  const code = document.getElementById('demo-code'), meter = document.getElementById('demo-meter');
+(function () {
+  const cards = [...document.querySelectorAll('.pv-card')];
   async function tick() {
-    try {
-      const c = await generateTOTP('JBSWY3DPEHPK3PXP', 30);
-      code.textContent = c.slice(0, 3) + ' ' + c.slice(3);
-      meter.style.width = (totpRemaining(30) / 30 * 100) + '%';
-    } catch { code.textContent = '482 913'; }
+    for (const c of cards) {
+      try {
+        const code = await generateTOTP(c.dataset.secret, 30);
+        c.querySelector('code').textContent = code.slice(0, 3) + ' ' + code.slice(3);
+        c.querySelector('u').style.width = (totpRemaining(30) / 30 * 100) + '%';
+      } catch (e) { c.querySelector('code').textContent = '--- ---'; }
+    }
   }
   tick(); setInterval(tick, 1000);
 })();
