@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — Vault</title>
+<meta name="description" content="App appearance and backups.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script>document.documentElement.dataset.theme = localStorage.getItem('vault-theme') || 'dark';</script>
+</head>
+<body data-page="settings">
+<header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a><nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a href="settings.html" aria-current="page">Settings</a><a class="btn btn-primary btn-sm" href="vaults.html">Open vaults</a></nav></header>
+
+<main class="page"><div class="settings-page">
+  <h1 class="settings-title">Settings</h1>
+  <p class="settings-desc">Appearance and backups for every vault on this device.</p>
+  <div class="settings-section"><h2 class="settings-section-title">Appearance</h2><div class="settings-card">
+    <div class="settings-row"><div class="settings-row-info"><div class="settings-row-label">Theme</div><div class="settings-row-desc">Switch between dark and light.</div></div>
+      <div class="toggle-group theme-toggle"><button class="toggle-btn" data-theme="light" onclick="setTheme('light')">Light</button><button class="toggle-btn active" data-theme="dark" onclick="setTheme('dark')">Dark</button></div></div>
+  </div></div>
+  <div class="settings-section"><h2 class="settings-section-title">Backup and data</h2><div class="settings-card">
+    <div class="settings-row"><div class="settings-row-info"><div class="settings-row-label">Export all vaults</div><div class="settings-row-desc">Download a backup file. Contents stay encrypted.</div></div><button class="btn btn-primary btn-sm" onclick="exportAllData()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button></div>
+    <div class="settings-row"><div class="settings-row-info"><div class="settings-row-label">Import a backup</div><div class="settings-row-desc">Restore vaults from an export file. Vaults already on this device are skipped.</div></div><button class="btn btn-outline btn-sm" onclick="document.getElementById('import-all-file').click()">Import</button><input type="file" id="import-all-file" accept=".json,application/json" style="display:none" onchange="importAllData(this)"></div>
+    <div class="settings-row"><div class="settings-row-info"><div class="settings-row-label">Delete all data</div><div class="settings-row-desc">Erase every vault and setting from this device. This can't be undone.</div></div><button class="btn btn-danger btn-sm" onclick="confirmResetAll()">Delete everything</button></div>
+  </div></div>
+</div></main>
+<footer class="site-footer"><span>Vault runs entirely in your browser. Nothing is uploaded.</span><nav><a href="vaults.html">Vaults</a><a href="security.html">Security</a><a href="settings.html">Settings</a></nav></footer>
+
+<div class="modal-overlay" id="modal-confirm-reset-all">
+  <div class="modal">
+    <h3>Delete everything?</h3>
+    <p class="modal-desc">This will permanently delete all your vaults and everything in them from this device.</p>
+    <p class="modal-desc" style="color:var(--red)">There's no way to undo this.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-reset-all')">Cancel</button>
+      <button class="btn btn-danger" onclick="doResetAll()">Delete everything</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<script src="js/core.js"></script>
+<script src="js/vaults.js"></script>
+<script src="js/totp.js"></script>
+<script src="js/items.js"></script>
+<script src="js/boot.js"></script>
+</body></html>

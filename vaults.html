@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your vaults — Vault</title>
+<meta name="description" content="Choose or create an encrypted vault.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script>document.documentElement.dataset.theme = localStorage.getItem('vault-theme') || 'dark';</script>
+</head>
+<body data-page="vaults">
+<header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a><nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a href="settings.html">Settings</a><a class="btn btn-primary btn-sm" href="vaults.html">Open vaults</a></nav></header>
+
+<main class="page">
+  <div class="page-head">
+    <div><h1>Your vaults</h1><p>Encrypted storage that lives on this device.</p></div>
+    <button class="btn btn-primary" onclick="openModal('create-vault')">New vault</button>
+  </div>
+  <div class="vault-grid" id="vault-grid"></div>
+</main>
+<footer class="site-footer"><span>Vault runs entirely in your browser. Nothing is uploaded.</span><nav><a href="vaults.html">Vaults</a><a href="security.html">Security</a><a href="settings.html">Settings</a></nav></footer>
+
+<div class="modal-overlay" id="modal-create-vault">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('create-vault');cvReset()">✕</button>
+    <h3>New Vault</h3>
+    <div id="cv-step-pick">
+      <div class="form-group">
+        <label class="form-label">Give it a name</label>
+        <input type="text" id="cv-name" class="form-input" placeholder="e.g. Personal, Work…" autocomplete="off">
+      </div>
+      <p class="modal-desc">How do you want to unlock it?</p>
+      <div class="method-option" id="mb-pw" onclick="pickMethod('password')">
+        <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+        <div>
+          <div class="method-title">Password</div>
+          <div class="method-desc">Type a password to unlock. Lets you transfer it to other devices via a link.</div>
+        </div>
+      </div>
+      <div class="method-option" id="mb-pk" onclick="pickMethod('passkey')">
+        <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div>
+          <div class="method-title">Passkey (fingerprint / Face ID)</div>
+          <div class="method-desc">Use your device's biometrics or PIN. Works on this device only.</div>
+        </div>
+      </div>
+      <div class="method-option" id="mb-both" onclick="pickMethod('both')">
+        <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div>
+          <div class="method-title">Both</div>
+          <div class="method-desc">Quick biometric unlock on this device, plus a password for sharing.</div>
+        </div>
+      </div>
+    </div>
+    <div id="cv-step-pw" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Choose a password</label>
+        <input type="password" id="new-pw" class="form-input" placeholder="At least 8 characters…"
+          autocomplete="off" data-lpignore="true" data-form-type="other"
+          readonly onfocus="this.removeAttribute('readonly')">
+        <div class="strength-bar"><div class="strength-fill" id="pw-strength-fill"></div></div>
+        <div class="strength-label" id="pw-strength-label"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type it again to confirm</label>
+        <input type="password" id="new-pw2" class="form-input" placeholder="Repeat your password…"
+          autocomplete="off" data-lpignore="true" data-form-type="other"
+          readonly onfocus="this.removeAttribute('readonly')">
+      </div>
+    </div>
+    <div id="cv-step-pk" style="display:none">
+      <p class="modal-desc" id="pk-info-text">
+        Your device will ask you to confirm with your fingerprint, Face ID, or PIN.
+      </p>
+      <div id="pk-status" style="font-size:12px;color:var(--muted);min-height:18px"></div>
+    </div>
+    <div class="form-error" id="create-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cv-back-btn" onclick="cvBack()" style="display:none">Back</button>
+      <button class="btn btn-ghost" onclick="closeModal('create-vault');cvReset()">Cancel</button>
+      <button class="btn btn-primary" id="create-btn" onclick="createVault()" style="display:none">Create vault</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-import-vault">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('import-vault');_pendingImport=null;history.replaceState(null,'',location.pathname+location.search)">✕</button>
+    <h3>Add shared vault</h3>
+    <p class="modal-desc">
+      Someone shared a vault with you. Give it a name so you can tell it apart from your others.
+    </p>
+    <div class="form-group">
+      <label class="form-label">Name for this vault</label>
+      <input type="text" id="import-name" class="form-input" placeholder="e.g. Shared by Alex…" autocomplete="off">
+    </div>
+    <div class="form-error" id="import-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('import-vault');_pendingImport=null;history.replaceState(null,'',location.pathname+location.search)">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmImport()">Add vault</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<script src="js/core.js"></script>
+<script src="js/vaults.js"></script>
+<script src="js/totp.js"></script>
+<script src="js/items.js"></script>
+<script src="js/boot.js"></script>
+</body></html>

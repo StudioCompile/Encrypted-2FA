@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security — Vault</title>
+<meta name="description" content="How Vault encrypts and protects your data.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script>document.documentElement.dataset.theme = localStorage.getItem('vault-theme') || 'dark';</script>
+</head>
+<body data-page="security">
+<header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a><nav class="site-nav" aria-label="Main"><a href="security.html" aria-current="page">Security</a><a href="settings.html">Settings</a><a class="btn btn-primary btn-sm" href="vaults.html">Open vaults</a></nav></header>
+
+<main class="wrap"><article class="doc">
+  <h1>How Vault protects your data</h1>
+  <p class="lead">Vault is built so that your data never leaves your device unencrypted. Here is exactly what it does, and what it can't do.</p>
+  <section><h2>Encryption</h2>
+    <p>Each item is encrypted with AES-256-GCM, which also detects tampering. The key comes from your password through two chained key-derivation steps: PBKDF2 with SHA-512 (500,000 iterations), a keyed HMAC step, then PBKDF2 with SHA-256 (another 500,000). Every encryption uses a fresh random salt and IV.</p>
+    <p>Your password is never stored. Vault keeps only a verifier built the same way, which can confirm a password but can't recover it.</p></section>
+  <section><h2>Where data lives</h2>
+    <p>Vaults are saved in your browser's local storage, already encrypted. Vault has no accounts and no server. Because of that, clearing your browser data deletes your vaults. Export a backup from <a href="settings.html">Settings</a> and keep it somewhere safe.</p></section>
+  <section><h2>Automatic locking</h2>
+    <ul><li>5 minutes without activity</li><li>2 minutes with the tab in the background</li><li>Immediately when you leave or close the page</li></ul>
+    <p>Locking clears the password, decrypted items and previews from memory. This is also why the open vault is a single page: moving between pages locks it.</p></section>
+  <section><h2>Passkeys</h2>
+    <p>A passkey lets you unlock with your fingerprint, Face ID or device PIN. Passkeys are tied to this device and need the site to be served over HTTPS. A vault with a password can also be shared by link; a passkey-only vault can't.</p></section>
+  <section><h2>Extra passcodes</h2>
+    <p>Any note or file can have its own passcode. It is combined with your vault password, so opening that item needs both.</p></section>
+  <section><h2>Sharing</h2>
+    <p>A share link contains an encrypted copy of the vault in the part of the URL after the <code>#</code>, which browsers never send to a server. Anyone with the link still needs your password. Treat the link as sensitive anyway, since it carries your encrypted data.</p></section>
+  <section><h2>Limits to know about</h2>
+    <p>Vault can't protect a device that already has malware, and a weak password is the weakest link. Choose a long, unique password. There is no recovery option: if you forget the password and have no passkey or backup, the data can't be opened.</p></section>
+</article></main>
+<footer class="site-footer"><span>Vault runs entirely in your browser. Nothing is uploaded.</span><nav><a href="vaults.html">Vaults</a><a href="security.html">Security</a><a href="settings.html">Settings</a></nav></footer>
+</body></html>
