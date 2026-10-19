@@ -1,65 +1,43 @@
 # Vault — Design System
 
-A secure-tool look: near-black neutral surfaces, one yellow brand colour, small corners, layered shadows. It should read as a professional instrument, not a marketing site.
+A professional tool: square, high contrast, one accent colour. No gradients, no glows, no rounded corners.
 
 ## Principles
-1. **Neutral first.** Surfaces are true greys with no blue cast. Yellow is the only chroma, so it always means "primary action" or "live state".
-2. **Depth, not decoration.** Panels separate from the page with a 1px border plus a soft shadow. No gradients or glows.
-3. **Tight geometry.** Corners are small (4–6px). Nothing is pill-shaped except status badges.
-4. **Density with air.** Panels pack information (label, value, meta) but keep 16–24px internal padding.
-5. **Codes are data.** Anything the user copies or reads digit by digit (2FA codes, secrets) uses the monospace face in a recessed tile.
+1. **Square.** Every border radius is 0. Buttons, inputs, panels, dialogs, toasts, badges.
+2. **High contrast.** Text is pure black on white or pure white on black. Control borders are at least 4.5:1 against the background; dividers are the only low-contrast lines.
+3. **One accent.** Blue marks the primary action, the active nav item and focus. It is never used decoratively.
+4. **Plain language.** One account, three places: Codes, Notes & files, Settings.
+5. **Codes are data.** Codes use the monospace face with tabular figures.
 
-## Colour
-| Token | Dark | Light | Use |
+## Tokens (`css/styles.css`)
+| Token | Light | Dark | Use |
 |---|---|---|---|
-| `--bg` | `#0a0a0a` | `#f1f1ee` | Page background |
-| `--surface` | `#141414` | `#ffffff` | Panels, header, sidebar |
-| `--surface-2` | `#1c1c1c` | `#f6f6f3` | Inner tiles, hover, active nav |
-| `--field` | `#0f0f0f` | `#ffffff` | Inputs, recessed areas |
-| `--border` | `#262626` | `#e0e0db` | Panel and row dividers |
-| `--border2` | `#3a3a3a` | `#b8b8b1` | Input and outline-button borders |
-| `--text` | `#f4f4f2` | `#121212` | Primary text |
-| `--muted` | `#8b8b87` | `#66665f` | Secondary text, labels |
-| `--primary-bg` | `#f2b705` | `#f2b705` | Primary buttons, brand marks |
-| `--accent` | `#f2b705` | `#8a6200` | Yellow used as text or focus ring (darkened on light for contrast) |
-| `--on-accent` | `#14110a` | `#14110a` | Text on yellow |
-| `--red` / `--green` | `#ff5c5c` / `#3ecf8e` | `#c42b2b` / `#17803f` | Errors, warnings / success |
+| `--bg` | `#ffffff` | `#000000` | Page |
+| `--surface` | `#ffffff` | `#0c0c0c` | Panels, sidebar |
+| `--subtle` | `#f0f0f0` | `#1b1b1b` | Hover, active nav, dialog footers |
+| `--line` | `#d4d4d4` | `#333333` | Row dividers |
+| `--edge` | `#8c8c8c` | `#5e5e5e` | Panel outlines |
+| `--border` | `#5c5c5c` | `#9a9a9a` | Inputs and outline buttons |
+| `--text` / `--muted` | `#000` / `#454545` | `#fff` / `#c4c4c4` | Text |
+| `--accent` | `#0047cc` | `#5c9dff` | Primary action, focus, active nav |
+| `--danger` / `--ok` / `--warn` | `#b00020` / `#0a6b2d` / `#8a5000` | `#ff6b6b` / `#4ade80` / `#ffc247` | State |
 
-Rules: never put white text on yellow; never use yellow for body text on light backgrounds (use `--accent`); keep one yellow primary button per view.
+Theme follows the system by default; Settings can force light or dark (`vault.theme` in localStorage, applied by `js/theme.js` before first paint).
 
-## Typography
-- **Inter** for everything (400, 500, 600, 700). Headlines 700 with −0.02 to −0.03em tracking.
-- **JetBrains Mono** for codes and secrets.
-- Scale: 64/38 hero · 32 page title · 24–26 section/panel title · 19 card title · 15 body · 13–14 meta.
-- Body line length under 65ch.
-
-## Shape and elevation
-- Radius: `--radius-sm` 2px, `--radius` 4px (buttons, inputs, tiles), `--radius-lg` 6px (panels, modals).
-- `--shadow-1`: panels at rest. `--shadow-2`: modals. `--edge`: 1px inner top highlight in dark mode that lifts panels off the page.
-- Primary buttons get a faint inner highlight and a yellow-tinted shadow.
+## Type
+System UI font stack and system monospace. Body 15px, page title 28px, section 20px. Weights 400/500/700.
 
 ## Components
-- **Panel**: `surface` + 1px `border` + `shadow-1`, 20–24px padding. Header = title (semibold) over muted subtitle.
-- **Tile**: `surface-2` + `border` inside a panel, for stats and code values.
-- **Buttons**: primary (yellow, dark text), outline (`border2`), ghost, danger (red). Sizes sm / default / lg. Weight 600.
-- **Inputs**: `field` background, `border2` border, yellow border on focus.
-- **Nav**: sidebar tabs with a 3px yellow bar on the active item.
-- **Timer ring**: yellow stroke, turns red in the last 5 seconds.
-- **Modal**: `surface`, `radius-lg`, `shadow-2`, 14ms rise-in.
-- **Toast**: inverted (light on dark theme), bottom centre.
+* **Buttons:** 40px (32 small, 48 large). Primary (accent fill), outline, danger, ghost. One primary per view.
+* **Inputs:** 42px, 1px `--border`, 2px accent focus outline.
+* **Panel:** 1px `--edge` border, rows separated by `--line`.
+* **Code row:** avatar square, name, monospace code, seconds left, and a 3px countdown bar that turns red in the last 5 seconds.
+* **Dialogs:** native `<dialog>`, header / body / footer, footer on `--subtle`.
+* **Notices:** 4px left rule in accent, warning or danger colour.
+* **Icons:** [Lucide](https://lucide.dev) (ISC), built into `assets/icons.svg` by `npm run icons`.
 
 ## Layout
-- Marketing pages: 1120px max width, header and content share one gutter.
-- Tool pages: fixed 232px sidebar plus a content column up to 960px. Below 860px the sidebar becomes a top bar with horizontally scrolling tabs.
+Sidebar 252px (Codes, Notes & files, Settings, account block with Lock and Sign out); content max 1000px. Below 820px the sidebar becomes a top bar with three tabs.
 
-## Logo
-`assets/logo.png` is a white V on transparent, already trimmed (500×373). Header height 26px, unlock screen 44px. In light theme the CSS filter inverts it to black. Keep clear space of at least half the mark's height. Favicon: the mark on a `#0a0a0a` rounded square.
-
-## Motion and accessibility
-- Motion only answers actions (modal open, button press) and live data (timer ring, code refresh). `prefers-reduced-motion` disables it.
-- Visible 2px yellow focus ring on every interactive element.
-- Text contrast meets WCAG AA in both themes.
-- Theme persists in `localStorage` (`vault-theme`) and is applied before first paint.
-
-## Files
-`css/styles.css` holds all tokens and components; pages are plain HTML and share it. Change a token in `:root` or `[data-theme="light"]` to restyle everything.
+## Accessibility
+Visible 2px focus ring, labelled controls, `role="alert"` errors, `aria-current` nav, reduced-motion support, and AA contrast in both themes.

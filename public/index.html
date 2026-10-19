@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vault — encrypted 2FA codes, notes and files</title>
+<meta name="description" content="Keep 2FA codes, notes and files end-to-end encrypted. Sync with an account, or keep everything on your device.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/theme.js"></script>
+</head>
+<body>
+<header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
+  <nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html#signup">Create account</a></nav></header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Your 2FA codes and private files. Encrypted before they leave your device.</h1>
+      <p class="lead">Vault is an authenticator and secure notebook in one. Sign in on any device to sync, or keep everything in your browser with no account at all.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="app.html#signup">Create free account</a>
+        <a class="btn btn-outline btn-lg" href="app.html">Sign in</a>
+      </div>
+      <p class="hero-note">Prefer no account? <a href="app.html#local">Use it on this device only</a>.</p>
+    </div>
+    <aside class="preview" aria-label="Live preview">
+      <div class="preview-head"><strong>Codes</strong><span><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-lock"></use></svg> End-to-end encrypted</span></div>
+      <ul class="list">
+        <li class="code-row" data-secret="JBSWY3DPEHPK3PXP"><div><div class="code-name">GitHub</div><div class="code-sub">demo@example.com</div></div><div class="code-value"><span class="digits">––– –––</span><span class="secs"></span></div><div class="bar"><i></i></div></li>
+        <li class="code-row" data-secret="GEZDGNBVGY3TQOJQ"><div><div class="code-name">Google</div><div class="code-sub">demo@gmail.com</div></div><div class="code-value"><span class="digits">––– –––</span><span class="secs"></span></div><div class="bar"><i></i></div></li>
+        <li class="code-row" data-secret="MFRGGZDFMZTWQ2LK"><div><div class="code-name">AWS</div><div class="code-sub">root-account</div></div><div class="code-value"><span class="digits">––– –––</span><span class="secs"></span></div><div class="bar"><i></i></div></li>
+      </ul>
+      <div class="preview-foot"><span>Demo codes, refreshing live</span><span>Not real accounts</span></div>
+    </aside>
+  </section>
+
+  <section class="band">
+    <div class="sec-head"><h2>Everything in one encrypted place</h2><p>No folders of vaults to manage. You have one account with codes, notes and files.</p></div>
+    <div class="grid3">
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-shield"></use></svg><h3>2FA codes</h3><p>Scan a QR code, paste a key or import from Google Authenticator. Codes refresh live with a countdown.</p></article>
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-note"></use></svg><h3>Notes and files</h3><p>Keep backup codes, IDs and documents next to your codes. Search across everything.</p></article>
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg><h3>Recovery key</h3><p>Forget your password and your recovery key gets you back in. We never see either of them.</p></article>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="sec-head"><h2>Choose how you store it</h2><p>Same app, same encryption. Pick where the encrypted data lives.</p></div>
+    <table class="compare">
+      <thead><tr><th></th><th><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-cloud"></use></svg> Account</th><th><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-device"></use></svg> This device only</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Sync across devices</th><td>Yes</td><td>No</td></tr>
+        <tr><th scope="row">Sign-up</th><td>Email and password</td><td>None. Just a password.</td></tr>
+        <tr><th scope="row">Where data lives</th><td>Encrypted on our servers</td><td>Encrypted in your browser</td></tr>
+        <tr><th scope="row">If you forget your password</th><td>Reset with your recovery key</td><td>Not recoverable. Keep a backup.</td></tr>
+        <tr><th scope="row">File size limit</th><td>1 MB each</td><td>10 MB each</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="band">
+    <div class="sec-head"><h2>Questions</h2></div>
+    <div class="faq">
+      <details><summary>Can you read my data?</summary><p>No. Everything is encrypted in your browser with a key derived from your password. The server only stores ciphertext and can’t decrypt it. <a href="security.html">Read how it works</a>.</p></details>
+      <details><summary>What if I forget my password?</summary><p>Use the recovery key you saved when you created the account. Without the password or the recovery key, nobody can decrypt your data, including us.</p></details>
+      <details><summary>Does it work offline?</summary><p>Local mode does. Once the page has loaded, codes are generated on your device, and local data never needs a connection.</p></details>
+      <details><summary>Can I move my codes from another app?</summary><p>Yes. Scan the export QR code from Google Authenticator, or import a file of otpauth:// links, from Settings.</p></details>
+    </div>
+  </section>
+
+  <section class="band"><div class="cta"><div><h2>Keep your second factor yours.</h2><p class="muted">Create an account in under a minute.</p></div><a class="btn btn-primary btn-lg" href="app.html#signup">Create free account</a></div></section>
+</main>
+<footer class="site-footer"><span>Vault encrypts your data on your device before it’s stored.</span><nav><a href="app.html">Sign in</a><a href="security.html">Security</a></nav></footer>
+<script src="js/crypto.js"></script>
+<script src="js/totp.js"></script>
+<script src="js/demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "vault",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Encrypted 2FA codes, notes and files with a zero-knowledge account system, hosted on Cloudflare Pages.",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "db:local": "wrangler d1 execute vault --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute vault --remote --file=schema.sql",
+    "deploy": "wrangler pages deploy",
+    "icons": "node scripts/build-icons.mjs",
+    "test": "node tests/api.test.mjs && node tests/ui.test.mjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^27.0.0",
+    "lucide-static": "^1.59.0",
+    "wrangler": "^4.0.0"
+  }
+}

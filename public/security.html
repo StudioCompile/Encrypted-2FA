@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security — Vault</title>
+<meta name="description" content="How Vault encrypts and protects your data.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/theme.js"></script>
+</head>
+<body>
+<header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
+  <nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html#signup">Create account</a></nav></header>
+<main><article class="doc">
+  <h1>How Vault protects your data</h1>
+  <p class="lead">Vault is built so the server never sees your password, your keys or your data. Here is exactly what happens, and what it can’t do.</p>
+
+  <section><h2>Encryption</h2>
+    <p>Your password is stretched with PBKDF2-SHA256 (600,000 iterations) in your browser, then split with HKDF into two unrelated values: a key-encryption key that never leaves your device, and an authentication key used to sign in.</p>
+    <p>Your data is encrypted with a random 256-bit data key using AES-256-GCM. That data key is stored only in wrapped (encrypted) form: once under your password-derived key, and once under your recovery key. Every item has its own random IV, and its id is bound into the encryption, so items can’t be swapped or tampered with undetected.</p>
+    <p>Changing your password only re-wraps the data key. It doesn’t need to touch your items.</p></section>
+
+  <section><h2>What the server stores</h2>
+    <table><thead><tr><th>Stored</th><th>Form</th></tr></thead><tbody>
+      <tr><td>Your email</td><td>Plain text (needed to sign you in)</td></tr>
+      <tr><td>Password</td><td>Never sent. The server keeps a salted hash of the derived authentication key.</td></tr>
+      <tr><td>Codes, notes, files</td><td>Ciphertext only</td></tr>
+      <tr><td>Metadata</td><td>Number of items, their sizes and last-modified times</td></tr>
+    </tbody></table></section>
+
+  <section><h2>Recovery key</h2>
+    <p>When you create an account you get a random 160-bit recovery key. It can unlock your data key if you forget your password. We store only a hash of it and a copy of the data key wrapped by it, which is useless without the key itself. If you lose both your password and your recovery key, your data can’t be recovered by anyone.</p></section>
+
+  <section><h2>This device only</h2>
+    <p>Local mode uses the same encryption, but the encrypted data lives in your browser’s IndexedDB and nothing is sent anywhere. Clearing your browser data deletes it, so export a backup from Settings.</p></section>
+
+  <section><h2>Sessions and locking</h2>
+    <ul>
+      <li>Sign-in sessions use an HttpOnly, SameSite=Strict cookie that scripts can’t read.</li>
+      <li>Your keys exist only in memory. Reloading the page or locking clears them, and you unlock again with your password.</li>
+      <li>Vault locks itself after 5 minutes of inactivity by default. You can change this in Settings.</li>
+      <li>Eight wrong password attempts lock the account for 15 minutes.</li>
+      <li>A strict Content Security Policy blocks third-party scripts, and Vault loads nothing from other sites.</li>
+    </ul></section>
+
+  <section><h2>Backups</h2>
+    <p>Exports can be protected with a passphrase (AES-256-GCM, PBKDF2 key). An export without a passphrase is plain text, and Vault warns you before it’s created.</p></section>
+
+  <section><h2>Limits to know about</h2>
+    <ul>
+      <li>Vault can’t protect a device that already has malware, and a weak password is the weakest link. Use a long, unique one.</li>
+      <li>As with any web app, you trust the site to serve you the correct code. If you self-host Vault, that’s you.</li>
+      <li>Your email address and usage metadata are visible to whoever runs the server.</li>
+      <li>Keep your 2FA services’ own backup codes. Vault is another copy, not a replacement.</li>
+    </ul></section>
+</article></main>
+<footer class="site-footer"><span>Vault encrypts your data on your device before it’s stored.</span><nav><a href="app.html">Sign in</a><a href="security.html">Security</a></nav></footer>
+</body>
+</html>

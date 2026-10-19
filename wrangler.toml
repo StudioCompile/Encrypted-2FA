@@ -1,0 +1,12 @@
+name = "vault"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "./public"
+
+# Create the database with:  npx wrangler d1 create vault
+# then paste the database_id it prints below.
+[[d1_databases]]
+binding = "DB"
+database_name = "vault"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# Optional: set ALLOW_SIGNUPS to "false" (Pages → Settings → Variables) to close registration.
