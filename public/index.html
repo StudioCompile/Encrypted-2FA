@@ -12,7 +12,7 @@
 </head>
 <body>
 <header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
-  <nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html#signup">Create account</a></nav></header>
+  <nav class="site-nav" aria-label="Main"><a href="index.html">Home</a><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html#signup">Create account</a></nav></header>
 
 <main class="wrap">
   <section class="hero">
@@ -36,13 +36,41 @@
     </aside>
   </section>
 
+  <section class="stats" aria-label="Key facts">
+    <div><small>Encryption</small><strong>AES-256-GCM</strong><span>Authenticated, tamper-evident</span></div>
+    <div><small>Key stretching</small><strong>600,000</strong><span>PBKDF2 iterations</span></div>
+    <div><small>Server can read</small><strong>Nothing</strong><span>Ciphertext only</span></div>
+    <div><small>Auto-lock</small><strong>5 min</strong><span>Adjustable in Settings</span></div>
+  </section>
+
   <section class="band">
     <div class="sec-head"><h2>Everything in one encrypted place</h2><p>No folders of vaults to manage. You have one account with codes, notes and files.</p></div>
-    <div class="grid3">
+    <div class="grid4">
       <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-shield"></use></svg><h3>2FA codes</h3><p>Scan a QR code, paste a key or import from Google Authenticator. Codes refresh live with a countdown.</p></article>
       <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-note"></use></svg><h3>Notes and files</h3><p>Keep backup codes, IDs and documents next to your codes. Search across everything.</p></article>
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-cloud"></use></svg><h3>Sync or stay local</h3><p>Sign in on any device, or keep everything in one browser with no account.</p></article>
       <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg><h3>Recovery key</h3><p>Forget your password and your recovery key gets you back in. We never see either of them.</p></article>
     </div>
+  </section>
+
+  <section class="band split">
+    <div class="sec-head"><h2>From password to key</h2><p>Your password is never sent or stored. It’s stretched on your device before anything is encrypted.</p><a class="btn btn-outline btn-sm" href="security.html">Read the details</a></div>
+    <ol class="chain">
+      <li><b>Your password</b><span>Typed, never sent</span></li>
+      <li><b>PBKDF2 · SHA-256</b><span>600,000 iterations</span></li>
+      <li><b>HKDF</b><span>Splits into a sign-in key and a key-wrapping key</span></li>
+      <li><b>Data key</b><span>Random AES-256 key, stored only in wrapped form</span></li>
+      <li class="end"><b>Your items</b><span>Each encrypted with its own random IV</span></li>
+    </ol>
+  </section>
+
+  <section class="band">
+    <div class="sec-head"><h2>Start in three steps</h2></div>
+    <ol class="steps">
+      <li><em>1</em><h3>Create an account</h3><p>Or choose “this device only” to skip the account.</p></li>
+      <li><em>2</em><h3>Add your codes</h3><p>Scan the QR code a service shows you, paste its key, or import from another app.</p></li>
+      <li><em>3</em><h3>Save your recovery key</h3><p>Keep it somewhere safe. Vault locks itself when you’re away.</p></li>
+    </ol>
   </section>
 
   <section class="band">
@@ -71,7 +99,7 @@
 
   <section class="band"><div class="cta"><div><h2>Keep your second factor yours.</h2><p class="muted">Create an account in under a minute.</p></div><a class="btn btn-primary btn-lg" href="app.html#signup">Create free account</a></div></section>
 </main>
-<footer class="site-footer"><span>Vault encrypts your data on your device before it’s stored.</span><nav><a href="app.html">Sign in</a><a href="security.html">Security</a></nav></footer>
+<footer class="site-footer"><span>Vault encrypts your data on your device before it’s stored.</span><nav><a href="index.html">Home</a><a href="app.html">Sign in</a><a href="app.html#signup">Create account</a><a href="security.html">Security</a></nav></footer>
 <script src="js/crypto.js"></script>
 <script src="js/totp.js"></script>
 <script src="js/demo.js"></script>
