@@ -1,12 +1,21 @@
-name = "vault"
+# Vault — Cloudflare Worker with static assets and a D1 database.
+# The name must match the Worker in your dashboard (Workers & Pages → encrypted-2fa).
+name = "encrypted-2fa"
+main = "src/worker.js"
 compatibility_date = "2025-01-01"
-pages_build_output_dir = "./public"
 
-# Create the database with:  npx wrangler d1 create vault
-# then paste the database_id it prints below.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# No database_id on purpose: Wrangler creates the D1 database on the first deploy and
+# the Worker creates its tables on the first request. To use an existing database,
+# add  database_id = "<id>"  below.
 [[d1_databases]]
 binding = "DB"
 database_name = "vault"
-database_id = "00000000-0000-0000-0000-000000000000"
 
-# Optional: set ALLOW_SIGNUPS to "false" (Pages → Settings → Variables) to close registration.
+# Optional: close registration (existing accounts keep working).
+# [vars]
+# ALLOW_SIGNUPS = "false"

@@ -3,12 +3,12 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "Encrypted 2FA codes, notes and files with a zero-knowledge account system, hosted on Cloudflare Pages.",
+  "description": "Encrypted 2FA codes, notes and files with a zero-knowledge account system, hosted on Cloudflare Workers.",
   "scripts": {
-    "dev": "wrangler pages dev",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "db:local": "wrangler d1 execute vault --local --file=schema.sql",
     "db:remote": "wrangler d1 execute vault --remote --file=schema.sql",
-    "deploy": "wrangler pages deploy",
     "icons": "node scripts/build-icons.mjs",
     "test": "node tests/api.test.mjs && node tests/ui.test.mjs"
   },
