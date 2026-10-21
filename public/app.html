@@ -17,22 +17,23 @@
   <div class="auth-panel">
     <div class="auth-top"><a class="brand" href="index.html" title="Home"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a></div>
     <div class="auth-body">
+      <div class="auth-steps" id="auth-steps" hidden><span id="auth-steps-label"></span><div><i id="auth-steps-bar"></i></div></div>
       <div class="notice" id="auth-notice" role="status" hidden></div>
 
       <section data-view="welcome" hidden>
         <h1>Welcome to Vault</h1>
-        <p class="sub">Your 2FA codes, encrypted on your device. You unlock them with a passcode or passkey every time. Nothing is remembered.</p>
-        <div id="g-wrap"><div id="g-btn" class="g-btn"></div><p class="hint" id="g-note" hidden></p></div>
+        <p class="sub">Keep your 2FA codes safe. How do you want to use Vault?</p>
+        <div id="g-wrap"><div id="g-btn" class="g-btn"></div><p class="hint" id="g-note" hidden></p><p class="hint mt-sm">Works on all your devices.</p></div>
         <div class="auth-sep" id="welcome-sep">or</div>
-        <button class="btn btn-outline btn-lg btn-block" type="button" data-act="use-local" id="btn-use-local">Use without an account</button>
-        <p class="hint mt-sm">Everything stays in this browser. Nothing is sent to a server.</p>
+        <button class="btn btn-outline btn-lg btn-block" type="button" data-act="use-local" id="btn-use-local">Use on this device only</button>
+        <p class="hint mt-sm">No account. Stays in this browser.</p>
       </section>
 
       <section data-view="unlock" hidden>
         <h1>Unlock Vault</h1>
         <p class="sub" id="unlock-sub"></p>
         <button class="btn btn-primary btn-lg btn-block" type="button" data-act="unlock-passkey" id="btn-unlock-passkey" hidden><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg>Unlock with passkey</button>
-        <div class="auth-sep" id="unlock-sep" hidden>or use your passcode</div>
+        <div class="auth-sep" id="unlock-sep" hidden>or type your passcode</div>
         <form data-form="unlock" novalidate>
           <div class="field"><label for="uk-pc">Passcode</label><span class="pw"><input class="input secret" id="uk-pc" name="vault-unlock" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required><button type="button" data-act="toggle-pw">Show</button></span></div>
           <div class="form-error" role="alert" hidden></div>
@@ -42,14 +43,14 @@
       </section>
 
       <section data-view="setup" hidden>
-        <h1>Create a passcode</h1>
-        <p class="sub" id="setup-sub">This protects your vault. You’ll enter it every time you open Vault, and it’s never saved on this device.</p>
+        <h1>Make a passcode</h1>
+        <p class="sub" id="setup-sub">You’ll type this each time you open Vault.</p>
         <form data-form="setup" novalidate>
           <div class="field"><label for="sp-pc">Passcode</label><span class="pw"><input class="input secret" id="sp-pc" name="vault-new" data-meter type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required><button type="button" data-act="toggle-pw">Show</button></span>
             <div class="meter" aria-hidden="true"><i></i></div><div class="meter-label" aria-live="polite"></div>
-            <span class="hint">At least 10 characters. A few random words is a good passcode. A short PIN can be guessed by anyone who copies your files, so add a passkey on the next step for hardware protection.</span></div>
+            <span class="hint">At least 10 characters. Try 3 or 4 random words.</span></div>
           <div class="field"><label for="sp-pc2">Confirm passcode</label><input class="input secret" id="sp-pc2" name="vault-confirm" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required></div>
-          <div class="notice warn" id="setup-warn">We can’t reset your passcode for you. You’ll get a recovery key next. Keep it somewhere safe.</div>
+          <div class="notice warn" id="setup-warn">We can’t reset your passcode for you. On the next screen you’ll get a recovery key. Keep it somewhere safe.</div>
           <div class="form-error" role="alert" hidden></div>
           <button class="btn btn-primary btn-lg btn-block" type="submit">Create vault</button>
         </form>
@@ -57,29 +58,29 @@
       </section>
 
       <section data-view="passkey-offer" hidden>
-        <h1>Add a passkey</h1>
-        <p class="sub">Unlock with Touch ID, Windows Hello, your phone or a security key instead of typing. Your passkey’s secret never leaves your authenticator, so someone who copies your files or has remote access to this computer can’t use it.</p>
+        <h1>Unlock faster?</h1>
+        <p class="sub">Use your fingerprint, face or security key instead of typing. You can skip this.</p>
         <div class="form-error" id="pko-error" role="alert" hidden></div>
         <button class="btn btn-primary btn-lg btn-block" type="button" data-act="pk-add-now" id="btn-pk-now"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg>Add a passkey</button>
         <div class="auth-alt"><button class="link-btn" type="button" data-act="pk-skip">Skip for now</button><span></span></div>
-        <p class="hint mt-sm">You can add or remove a passkey later in Settings. Your passcode keeps working either way.</p>
+        <p class="hint mt-sm">You can change this later in Settings.</p>
       </section>
 
       <section data-view="recovery-key" hidden>
         <h1>Save your recovery key</h1>
-        <p class="sub">If you forget your passcode, this key (plus your Google sign-in) is the only way back into your data. Vault can’t see it or reset it for you.</p>
+        <p class="sub">If you forget your passcode, this is the only way back in. Save it somewhere safe. You won’t see it again.</p>
         <div class="key-box" id="rk-code" aria-label="Recovery key"></div>
         <div class="btn-row">
           <button class="btn btn-outline" type="button" data-act="copy-rk">Copy</button>
           <button class="btn btn-outline" type="button" data-act="download-rk">Download</button>
         </div>
-        <label class="check mb-md"><input type="checkbox" id="rk-saved"><span>I’ve saved my recovery key somewhere safe.</span></label>
+        <label class="check mb-md"><input type="checkbox" id="rk-saved"><span>I saved it.</span></label>
         <button class="btn btn-primary btn-lg btn-block" type="button" id="rk-continue" data-act="rk-continue" disabled>Continue</button>
       </section>
 
       <section data-view="recover" hidden>
         <h1>Reset your passcode</h1>
-        <p class="sub" id="recover-sub">Enter the recovery key you saved when you set up your vault. Any passkey will be removed, and you can add one again afterwards.</p>
+        <p class="sub" id="recover-sub">Enter the recovery key you saved when you made your vault, then choose a new passcode. Your passkey will be removed, and you can add it again afterwards.</p>
         <form data-form="recover" novalidate>
           <div class="field"><label for="rc-key">Recovery key</label><input class="input mono" id="rc-key" name="vault-recovery" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" required></div>
           <div class="field"><label for="rc-pc">New passcode</label><span class="pw"><input class="input secret" id="rc-pc" name="vault-new2" data-meter type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required><button type="button" data-act="toggle-pw">Show</button></span>
@@ -100,7 +101,7 @@
     <a class="brand" href="index.html" title="Home"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
     <nav class="nav" aria-label="Main">
       <button type="button" data-act="nav" data-page="codes"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-shield"></use></svg>Codes<span class="count" id="count-codes"></span></button>
-      <button type="button" data-act="nav" data-page="files"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-file"></use></svg>Notes &amp; files<span class="count" id="count-files"></span></button>
+      <button type="button" data-act="nav" data-page="files"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-file"></use></svg>Notes<span class="count" id="count-files"></span></button>
       <button type="button" data-act="nav" data-page="settings"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-settings"></use></svg>Settings</button>
     </nav>
     <div class="acct">
@@ -115,16 +116,16 @@
   <main class="main">
     <section id="page-codes">
       <div class="page-head"><h1>Codes</h1><button class="btn btn-primary" type="button" data-act="add-code"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-plus"></use></svg>Add code</button></div>
-      <div class="toolbar"><div class="search"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-search"></use></svg><input class="input" id="q-codes" type="search" placeholder="Search codes" aria-label="Search codes" autocomplete="off"></div></div>
+      <div class="toolbar"><div class="search"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-search"></use></svg><input class="input" id="q-codes" type="search" placeholder="Search" aria-label="Search codes" autocomplete="off"></div></div>
       <div class="panel"><ul class="list" id="code-list"></ul></div>
     </section>
 
     <section id="page-files" hidden>
-      <div class="page-head"><h1>Notes &amp; files</h1><div class="btn-row flush">
-        <button class="btn btn-outline" type="button" data-act="upload"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-upload"></use></svg>Upload file</button>
-        <button class="btn btn-primary" type="button" data-act="new-note"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-plus"></use></svg>New note</button></div></div>
+      <div class="page-head"><h1>Notes</h1><div class="btn-row flush">
+        <button class="btn btn-outline" type="button" data-act="upload"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-upload"></use></svg>Add file</button>
+        <button class="btn btn-primary" type="button" data-act="new-note"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-plus"></use></svg>Add note</button></div></div>
       <input type="file" id="file-input" hidden>
-      <div class="toolbar"><div class="search"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-search"></use></svg><input class="input" id="q-files" type="search" placeholder="Search notes and files" aria-label="Search notes and files" autocomplete="off"></div></div>
+      <div class="toolbar"><div class="search"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-search"></use></svg><input class="input" id="q-files" type="search" placeholder="Search" aria-label="Search notes and files" autocomplete="off"></div></div>
       <div class="panel"><ul class="list" id="file-list"></ul></div>
     </section>
 
@@ -135,43 +136,43 @@
         <h2>Account</h2>
         <div class="panel">
           <div class="set-row" data-only="cloud"><div><b>Signed in with Google</b><span class="d" id="set-email"></span></div><button class="btn btn-outline btn-sm" type="button" data-act="signout-all">Sign out everywhere</button></div>
-          <div class="set-row" data-only="local"><div><b>Storage</b><span class="d">This device only. Encrypted in this browser and not synced. Clearing your browser data deletes it.</span></div></div>
+          <div class="set-row" data-only="local"><div><b>Storage</b><span class="d">On this device only. Save a backup so you never lose it.</span></div></div>
         </div>
       </div>
 
       <div class="set-section">
         <h2>Security</h2>
         <div class="panel">
-          <div class="set-row"><div><b>Passcode</b><span class="d">Required every time you open Vault. It’s never saved on this device.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="change-passcode">Change passcode</button></div>
+          <div class="set-row"><div><b>Passcode</b><span class="d">What you type to open Vault.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="change-passcode">Change passcode</button></div>
           <div class="set-row" id="row-passkey" hidden><div><b>Passkey</b><span class="d" id="passkey-status"></span></div><button class="btn btn-outline btn-sm" type="button" id="btn-passkey" data-act="passkey-toggle">Add passkey</button></div>
-          <div class="set-row" data-only="cloud"><div><b>Recovery key</b><span class="d">Replace your recovery key. The old one stops working.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="new-recovery">New recovery key</button></div>
-          <div class="set-row"><div><b>Auto-lock</b><span class="d">Lock Vault after this much time without activity. Locking clears your keys from memory.</span></div>
+          <div class="set-row" data-only="cloud"><div><b>Recovery key</b><span class="d">Replaces your old key.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="new-recovery">New recovery key</button></div>
+          <div class="set-row"><div><b>Lock automatically</b><span class="d">Locks when you’re away.</span></div>
             <select class="select auto" id="set-autolock" aria-label="Auto-lock"><option value="0">When I leave this tab</option><option value="1">After 1 minute</option><option value="5">After 5 minutes</option><option value="15">After 15 minutes</option><option value="30">After 30 minutes</option></select></div>
         </div>
       </div>
 
       <div class="set-section">
-        <h2>Appearance</h2>
+        <h2>Look</h2>
         <div class="panel">
-          <div class="set-row"><div><b>Theme</b><span class="d">Match your system, or choose light or dark.</span></div>
+          <div class="set-row"><div><b>Light or dark</b><span class="d">Pick how Vault looks.</span></div>
             <select class="select auto" id="set-theme" aria-label="Theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
         </div>
       </div>
 
       <div class="set-section">
-        <h2>Data</h2>
+        <h2>Backup</h2>
         <div class="panel">
-          <div class="set-row"><div><b>Export backup</b><span class="d">Download everything as a file. You can protect it with a passphrase.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="export"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-download"></use></svg>Export</button></div>
-          <div class="set-row"><div><b>Import</b><span class="d">Add items from a Vault backup, a Google Authenticator export, or a list of otpauth:// links.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="import"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-upload"></use></svg>Import</button></div>
+          <div class="set-row"><div><b>Save a backup</b><span class="d">Download a copy of everything.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="export"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-download"></use></svg>Save</button></div>
+          <div class="set-row"><div><b>Add from a backup</b><span class="d">From Vault or Google Authenticator.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="import"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-upload"></use></svg>Add</button></div>
           <input type="file" id="import-input" accept=".json,.txt,application/json,text/plain" hidden>
         </div>
       </div>
 
       <div class="set-section">
-        <h2>Danger zone</h2>
+        <h2>Delete</h2>
         <div class="panel">
-          <div class="set-row danger" data-only="cloud"><div><b>Delete account</b><span class="d">Permanently delete your account and everything in it. This can’t be undone.</span></div><button class="btn btn-danger-outline btn-sm" type="button" data-act="delete-account">Delete account</button></div>
-          <div class="set-row danger" data-only="local"><div><b>Delete local data</b><span class="d">Erase everything Vault stores in this browser. This can’t be undone.</span></div><button class="btn btn-danger-outline btn-sm" type="button" data-act="delete-local">Delete local data</button></div>
+          <div class="set-row danger" data-only="cloud"><div><b>Delete account</b><span class="d">Removes your account and everything in it.</span></div><button class="btn btn-danger-outline btn-sm" type="button" data-act="delete-account">Delete account</button></div>
+          <div class="set-row danger" data-only="local"><div><b>Delete everything</b><span class="d">Removes everything Vault saved here.</span></div><button class="btn btn-danger-outline btn-sm" type="button" data-act="delete-local">Delete local data</button></div>
         </div>
       </div>
     </section>
@@ -186,17 +187,17 @@
       <input type="hidden" id="code-id">
       <div class="btn-row" id="code-scan-row">
         <button class="btn btn-outline" type="button" data-act="scan-qr"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-qr"></use></svg>Scan QR code</button>
-        <button class="btn btn-outline" type="button" data-act="pick-qr"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-image"></use></svg>Use an image</button>
+        <button class="btn btn-outline" type="button" data-act="pick-qr"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-image"></use></svg>Choose a picture</button>
         <input type="file" id="qr-input" accept="image/*" hidden>
       </div>
       <div class="row2">
-        <div class="field"><label for="code-issuer">Service</label><input class="input" id="code-issuer" autocomplete="off" placeholder="GitHub"></div>
+        <div class="field"><label for="code-issuer">Name</label><input class="input" id="code-issuer" autocomplete="off" placeholder="GitHub"></div>
         <div class="field"><label for="code-name">Account</label><input class="input" id="code-name" autocomplete="off" placeholder="you@example.com"></div>
       </div>
-      <div class="field"><label for="code-secret">Secret key</label><span class="pw"><input class="input mono secret" id="code-secret" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="Paste the key, or an otpauth:// link"><button type="button" data-act="toggle-pw">Show</button></span></div>
-      <details><summary>Advanced</summary>
+      <div class="field"><label for="code-secret">Setup key</label><span class="pw"><input class="input mono secret" id="code-secret" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="Paste the setup key from the website"><button type="button" data-act="toggle-pw">Show</button></span></div>
+      <details><summary>More options</summary>
         <div class="row2">
-          <div class="field"><label for="code-period">Refresh (seconds)</label><input class="input" id="code-period" type="number" min="10" max="120" value="30"></div>
+          <div class="field"><label for="code-period">New code every (seconds)</label><input class="input" id="code-period" type="number" min="10" max="120" value="30"></div>
           <div class="field"><label for="code-digits">Digits</label><select class="select" id="code-digits"><option>6</option><option>7</option><option>8</option></select></div>
         </div>
         <div class="field"><label for="code-algorithm">Algorithm</label><select class="select" id="code-algorithm"><option value="SHA1">SHA-1 (most services)</option><option value="SHA256">SHA-256</option><option value="SHA512">SHA-512</option></select></div>
@@ -274,10 +275,10 @@
 <dialog id="dlg-recovery" aria-labelledby="rkd-title">
   <header class="dlg-head"><h2 id="rkd-title">Your new recovery key</h2></header>
   <div class="dlg-body">
-    <p>Save this key now. It replaces your old one, and it’s the only way to reset your password.</p>
+    <p>Save this key now. It replaces your old one, and it’s the only way back in if you forget your passcode.</p>
     <div class="key-box" id="rkd-code"></div>
     <div class="btn-row"><button class="btn btn-outline" type="button" data-act="copy-rk">Copy</button><button class="btn btn-outline" type="button" data-act="download-rk">Download</button></div>
-    <label class="check"><input type="checkbox" id="rkd-saved"><span>I’ve saved my recovery key somewhere safe.</span></label>
+    <label class="check"><input type="checkbox" id="rkd-saved"><span>I’ve saved my recovery key.</span></label>
   </div>
   <footer class="dlg-foot"><button class="btn btn-primary" type="button" id="rkd-done" data-act="close-dialog" disabled>Done</button></footer>
 </dialog>

@@ -11,10 +11,19 @@
 </head>
 <body>
 <header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
-  <nav class="site-nav" aria-label="Main"><a href="index.html">Home</a><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html">Open Vault</a></nav></header>
+  <nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a class="btn btn-primary btn-sm" href="app.html">Open Vault</a></nav></header>
 <main><article class="doc">
   <h1>How Vault protects your data</h1>
   <p class="lead">Vault assumes someone else might get onto your computer. So nothing stored on it can open your data, and nothing is remembered between visits. Here is exactly how that works, and where the limits are.</p>
+
+  <section><h2>In plain words</h2>
+    <ul>
+      <li>Your codes, notes and files are scrambled (encrypted) on your device before they are saved anywhere.</li>
+      <li>Only your passcode or passkey can unscramble them. Vault doesn’t keep either one.</li>
+      <li>Google only confirms who you are. It can’t see your data and can’t unlock it.</li>
+      <li>Vault locks when you leave, so someone else on your computer sees nothing.</li>
+    </ul>
+    <p>The sections below are the technical details, for anyone who wants them.</p></section>
 
   <section><h2>You unlock it every time</h2>
     <p>When you close, reload or lock Vault, your keys are erased from memory. To open it again you enter your passcode or use your passkey. There is no “remember me” and no saved password. The passcode field is drawn so browsers don’t offer to save it.</p></section>
@@ -62,6 +71,6 @@
       <li>Keep your 2FA services’ own backup codes. Vault is another copy, not a replacement.</li>
     </ul></section>
 </article></main>
-<footer class="site-footer"><span>Vault encrypts your data on your device and never stores the key to it.</span><nav><a href="index.html">Home</a><a href="app.html">Sign in</a><a href="app.html#local">No account</a><a href="security.html">Security</a></nav></footer>
+<footer class="site-footer"><span>Vault encrypts your data on your device and never stores the key to it.</span><nav><a href="index.html">Home</a><a href="security.html">Security</a></nav></footer>
 </body>
 </html>

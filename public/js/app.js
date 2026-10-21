@@ -23,7 +23,7 @@
   const MAX_NOTE_BYTES = 80000;
   const fmtSize = n => (n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
   const fmtDate = ms => new Date(ms).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  const friendly = e => (e && e.message === 'WRONG_SECRET' ? 'Incorrect password.' : (e && e.message) || 'Something went wrong.');
+  const friendly = e => (e && e.message === 'WRONG_SECRET' ? 'Incorrect passcode.' : (e && e.message) || 'Something went wrong.');
 
   /* ================= UI helpers ================= */
   let toastTimer = null;
@@ -106,18 +106,31 @@
     if (view === 'welcome') await prepareWelcome();
     if (view === 'unlock') prepareUnlock();
     if (view === 'setup') prepareSetup();
+    showProgress(view);
     const first = $(`#auth [data-view="${view}"] input:not([type=hidden]):not([type=checkbox])`);
     setTimeout(() => first && first.focus(), 30);
   }
 
+  // Small "Step 1 of 3" bar while someone is creating their vault.
+  function showProgress(view) {
+    const cloud = S.mode === 'cloud', pk = Passkey.supported();
+    const total = (cloud ? 2 : 1) + (pk ? 1 : 0);
+    const at = { 'setup': 1, 'recovery-key': 2, 'passkey-offer': cloud ? 3 : 2 }[view];
+    const box = $('#auth-steps');
+    box.hidden = !at;
+    if (!at) return;
+    $('#auth-steps-label').textContent = 'Step ' + Math.min(at, total) + ' of ' + total;
+    $('#auth-steps-bar').style.width = (Math.min(at, total) / total * 100) + '%';
+  }
+
   async function prepareWelcome() {
     const has = await Local.hasProfile();
-    $('#btn-use-local').textContent = has ? 'Open data on this device' : 'Use without an account';
+    $('#btn-use-local').textContent = has ? 'Open my vault' : 'Use on this device only';
     const note = $('#g-note'), box = $('#g-btn');
     note.hidden = true; box.innerHTML = '';
     $('#g-wrap').hidden = !S.cloud; $('#welcome-sep').hidden = !S.cloud;
     if (!S.cloud) return;
-    if (!S.cfg || !S.cfg.googleClientId) { note.textContent = 'Google sign-in isn’t set up on this server yet. You can still use Vault without an account.'; note.hidden = false; return; }
+    if (!S.cfg || !S.cfg.googleClientId) { note.textContent = 'Google sign-in isn’t ready yet. You can still use Vault on this device.'; note.hidden = false; return; }
     renderGoogle();
   }
 
@@ -164,18 +177,18 @@
 
   function prepareUnlock() {
     const cloud = S.mode === 'cloud', pk = Passkey.supported() && S.vault && S.vault.passkey;
-    $('#unlock-sub').textContent = cloud ? S.email : 'Data on this device · not synced';
+    $('#unlock-sub').textContent = cloud ? S.email : 'Saved on this device only';
     $('#btn-unlock-passkey').hidden = !pk; $('#unlock-sep').hidden = !pk;
     const b = $('#btn-unlock-out');
-    b.textContent = cloud ? 'Sign out' : 'Use a Google account'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
+    b.textContent = cloud ? 'Sign out' : 'Sign in with Google'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
     b.hidden = !cloud && !S.cloud;
   }
   function prepareSetup() {
     const cloud = S.mode === 'cloud';
-    $('#setup-sub').textContent = cloud ? 'Signed in as ' + S.email + '. Choose a passcode to protect your vault. You’ll enter it every time you open Vault, and it’s never saved on this device.'
-      : 'This protects the data stored on this device. You’ll enter it every time you open Vault, and it’s never saved.';
-    $('#setup-warn').textContent = cloud ? 'We can’t reset your passcode for you. You’ll get a recovery key next. Keep it somewhere safe.'
-      : 'There’s no recovery option on this device. If you forget your passcode and have no passkey, the data can’t be opened. Export a backup from Settings.';
+    $('#setup-sub').textContent = cloud ? 'Signed in as ' + S.email + '. Choose a passcode to lock your vault. You’ll type it each time you open Vault.'
+      : 'Your passcode locks the data saved on this device. You’ll type it each time you open Vault.';
+    $('#setup-warn').textContent = cloud ? 'Next you’ll get a recovery key. It’s your backup if you forget your passcode.'
+      : 'There’s no recovery option here. If you forget your passcode, your data is lost. Save a backup in Settings.';
     const b = $('#btn-setup-out');
     b.textContent = cloud ? 'Sign out' : 'Cancel'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
   }
@@ -273,7 +286,7 @@
     await loadItems();
     form.reset(); resetMeters(form); maskInputs(form);
     S.afterRk = enterApp;
-    showRecoveryKey(rk, 'Your passcode was reset. Here is your new recovery key. The old one no longer works.');
+    showRecoveryKey(rk, 'Your passcode was reset. Here is your new recovery key. Save it now, because the old one no longer works.');
   }
 
   /* ================= Session ================= */
@@ -299,7 +312,7 @@
   }
   function authLost() {
     wipeMemory(); S.mode = null; S.email = null; S.vault = null;
-    showAuth('welcome', { notice: 'Your session expired. Sign in with Google again.', kind: 'warn' });
+    showAuth('welcome', { notice: 'You were signed out. Please sign in with Google again.', kind: 'warn' });
   }
 
   async function loadItems() {
@@ -349,10 +362,10 @@
     $('#auth').hidden = true; $('#app').hidden = false;
     S.lastActive = Date.now();
     const cloud = S.mode === 'cloud';
-    $('#acct-kind').textContent = cloud ? 'Google account' : 'Local · not synced';
+    $('#acct-kind').textContent = cloud ? 'Signed in with Google' : 'No account';
     $('#acct-name').textContent = cloud ? S.email : 'This device';
     const b = $('#btn-signout');
-    b.textContent = cloud ? 'Sign out' : 'Use Google'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
+    b.textContent = cloud ? 'Sign out' : 'Sign in with Google'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
     b.hidden = !cloud && !S.cloud;
     $('#set-autolock').value = pref.get('autolock', '5');
     $('#set-theme').value = VaultTheme.get();
@@ -384,7 +397,7 @@
       .sort((a, b) => (a.issuer || a.name).localeCompare(b.issuer || b.name, undefined, { sensitivity: 'base' }));
     const el = $('#code-list');
     if (!all.length) {
-      el.innerHTML = `<li class="empty">${icon('shield')}<h2>No codes yet</h2><p>Add the 2FA codes for your accounts. Scan the QR code a service shows you, or paste its secret key.</p><button class="btn btn-primary" type="button" data-act="add-code">${icon('plus')}Add your first code</button></li>`;
+      el.innerHTML = `<li class="empty">${icon('shield')}<h2>No codes yet</h2><p>Scan the QR code a website shows you.</p><button class="btn btn-primary" type="button" data-act="add-code">${icon('plus')}Add a code</button></li>`;
       return;
     }
     if (!list.length) { el.innerHTML = `<li class="empty"><p>No codes match “${esc(q)}”.</p></li>`; return; }
@@ -435,7 +448,7 @@
     const list = all.filter(i => !q || ((i.title || '') + ' ' + (i.body || '')).toLowerCase().includes(q)).sort((a, b) => b.updatedAt - a.updatedAt);
     const el = $('#file-list');
     if (!all.length) {
-      el.innerHTML = `<li class="empty">${icon('file')}<h2>No notes or files yet</h2><p>Keep recovery codes, passwords, IDs and documents encrypted alongside your 2FA codes.</p><div class="btn-row center"><button class="btn btn-primary" type="button" data-act="new-note">${icon('plus')}New note</button><button class="btn btn-outline" type="button" data-act="upload">${icon('upload')}Upload file</button></div></li>`;
+      el.innerHTML = `<li class="empty">${icon('file')}<h2>Nothing here yet</h2><p>Keep private notes and files here.</p><div class="btn-row center"><button class="btn btn-primary" type="button" data-act="new-note">${icon('plus')}Add note</button><button class="btn btn-outline" type="button" data-act="upload">${icon('upload')}Add file</button></div></li>`;
       return;
     }
     if (!list.length) { el.innerHTML = `<li class="empty"><p>Nothing matches “${esc(q)}”.</p></li>`; return; }
@@ -458,7 +471,7 @@
     $('#set-email').textContent = S.email || '';
     const has = !!(S.vault && S.vault.passkey);
     $('#row-passkey').hidden = !Passkey.supported();
-    $('#passkey-status').textContent = has ? 'Set up. You can unlock with your passkey instead of typing your passcode.' : 'Not set up. Unlock with Touch ID, Windows Hello, your phone or a security key.';
+    $('#passkey-status').textContent = has ? 'Set up. Unlock with your fingerprint, face or key.' : 'Not set up. Unlock with your fingerprint or face.';
     $('#btn-passkey').textContent = has ? 'Remove passkey' : 'Add passkey';
   }
 
@@ -559,7 +572,7 @@
   /* ================= Notes & files ================= */
   function openNoteDialog(id) {
     const it = id ? byId(id) : null, isFile = !!it && it.type === 'file';
-    $('#note-heading').textContent = !it ? 'New note' : isFile ? 'Rename file' : 'Edit note';
+    $('#note-heading').textContent = !it ? 'Add note' : isFile ? 'Rename file' : 'Edit note';
     $('#note-id').value = it ? it.id : '';
     $('#note-title').value = it ? it.title || '' : '';
     $('#note-body').value = it && !isFile ? it.body || '' : '';
@@ -584,7 +597,7 @@
   }
   async function uploadFile(file) {
     if (!file) return;
-    if (file.size > maxFile()) { toast('Files can be up to ' + fmtSize(maxFile()) + ' in ' + (S.mode === 'cloud' ? 'a cloud account' : 'local mode') + '.', true); return; }
+    if (file.size > maxFile()) { toast('Files can be up to ' + fmtSize(maxFile()) + ' with ' + (S.mode === 'cloud' ? 'a Google account' : 'no account') + '.', true); return; }
     toast('Encrypting…');
     await persist({ type: 'file', title: file.name, mime: file.type || 'application/octet-stream', size: file.size }, new Uint8Array(await file.arrayBuffer()));
     render(); toast('File encrypted and saved.');
@@ -703,20 +716,20 @@
     if (!r) return;
     await Api.req('DELETE', '/account', { pcAuth: r.cr.auth });
     wipeMemory(); S.mode = null; S.email = null; S.vault = null; pref.set('mode', '');
-    showAuth('welcome', { notice: 'Your account was deleted.' });
+    showAuth('welcome', { notice: 'Account deleted.' });
   }
   async function deleteLocal() {
     if (!await confirmDialog({ title: 'Delete local data?', body: 'Everything Vault stores in this browser will be erased. This can’t be undone. Export a backup first if you might need it.', ok: 'Delete everything', danger: true })) return;
     await Local.wipe();
     wipeMemory(); S.mode = null; S.vault = null; pref.set('mode', '');
-    showAuth('welcome', { notice: 'Local data deleted.' });
+    showAuth('welcome', { notice: 'Everything deleted.' });
   }
 
   /* ---------- export / import ---------- */
   async function exportBackup() {
     const pass = await askSecret({
       title: 'Export backup', label: 'Backup passphrase (optional)', ok: 'Download', optional: true,
-      help: 'Protect the backup with a passphrase. Leave it empty to download a plain, unencrypted file.'
+      help: 'Choose a passphrase to lock the backup file. If you leave it empty, the file will not be locked.'
     });
     if (pass === null) return;
     if (pass === '' && !await confirmDialog({ title: 'Download without encryption?', body: 'The file will contain your 2FA secrets and notes in plain text. Anyone who gets it can read them. Store it somewhere safe and delete it when you’re done.', ok: 'Download anyway', danger: true })) return;
@@ -857,7 +870,7 @@
       if (S.mode === 'cloud') return showAuth('recover');
       if (await confirmDialog({ title: 'Forgot your passcode?', body: 'Data on this device can’t be recovered without your passcode or passkey. You can erase it and start over, then restore from a backup if you have one.', ok: 'Erase and start over', danger: true })) {
         await Local.wipe(); S.mode = null; S.vault = null; pref.set('mode', '');
-        showAuth('welcome', { notice: 'Local data erased.' });
+        showAuth('welcome', { notice: 'Everything deleted.' });
       }
     },
     'back-unlock': () => showAuth('unlock'),

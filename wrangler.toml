@@ -17,8 +17,8 @@ binding = "DB"
 database_name = "vault"
 
 [vars]
-# Your Google OAuth "Web application" client ID (public value, safe to commit). See README.
-GOOGLE_CLIENT_ID = ""
+# Your Google sign-in client ID. It is public, so it is safe to keep in this file.
+GOOGLE_CLIENT_ID = "407397476387-6dmm67mc66n2i3d798cp44pk7oicftqt.apps.googleusercontent.com"
 # Optional: only these Google accounts may sign in (comma-separated).
 # ALLOWED_EMAILS = "you@gmail.com"
 # Optional: stop new accounts being created (existing accounts keep working).
