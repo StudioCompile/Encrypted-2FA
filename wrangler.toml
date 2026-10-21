@@ -16,6 +16,10 @@ run_worker_first = ["/api/*"]
 binding = "DB"
 database_name = "vault"
 
-# Optional: close registration (existing accounts keep working).
-# [vars]
+[vars]
+# Your Google OAuth "Web application" client ID (public value, safe to commit). See README.
+GOOGLE_CLIENT_ID = ""
+# Optional: only these Google accounts may sign in (comma-separated).
+# ALLOWED_EMAILS = "you@gmail.com"
+# Optional: stop new accounts being created (existing accounts keep working).
 # ALLOW_SIGNUPS = "false"

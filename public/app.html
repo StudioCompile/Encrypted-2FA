@@ -12,47 +12,62 @@
 </head>
 <body>
 
-<!-- ============ Sign in / create account / local ============ -->
+<!-- ============ Welcome / unlock / set-up ============ -->
 <div class="auth" id="auth" hidden>
   <div class="auth-panel">
     <div class="auth-top"><a class="brand" href="index.html" title="Home"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a></div>
     <div class="auth-body">
       <div class="notice" id="auth-notice" role="status" hidden></div>
 
-      <section data-view="signin" hidden>
-        <h1>Sign in</h1>
-        <p class="sub">Access your codes, notes and files on any device.</p>
-        <form data-form="signin" novalidate>
-          <div class="field"><label for="si-email">Email</label><input class="input" id="si-email" name="email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
-          <div class="field"><label for="si-pw">Password</label><span class="pw"><input class="input" id="si-pw" name="password" type="password" autocomplete="current-password" required><button type="button" data-act="toggle-pw">Show</button></span></div>
-          <div class="form-error" role="alert" hidden></div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit">Sign in</button>
-        </form>
-        <div class="auth-alt"><button class="link-btn" type="button" data-act="show-view" data-to="recover">Forgot password?</button><button class="link-btn" type="button" data-act="show-view" data-to="signup">Create an account</button></div>
-        <div class="auth-sep">or</div>
-        <button class="btn btn-outline btn-block" type="button" data-act="use-local" id="btn-use-local">Use on this device only</button>
-        <p class="hint mt-sm">No account. Data is encrypted and stays in this browser.</p>
+      <section data-view="welcome" hidden>
+        <h1>Welcome to Vault</h1>
+        <p class="sub">Your 2FA codes, encrypted on your device. You unlock them with a passcode or passkey every time. Nothing is remembered.</p>
+        <div id="g-wrap"><div id="g-btn" class="g-btn"></div><p class="hint" id="g-note" hidden></p></div>
+        <div class="auth-sep" id="welcome-sep">or</div>
+        <button class="btn btn-outline btn-lg btn-block" type="button" data-act="use-local" id="btn-use-local">Use without an account</button>
+        <p class="hint mt-sm">Everything stays in this browser. Nothing is sent to a server.</p>
       </section>
 
-      <section data-view="signup" hidden>
-        <h1>Create your account</h1>
-        <p class="sub">Your data is encrypted on your device before it’s synced.</p>
-        <form data-form="signup" novalidate>
-          <div class="field"><label for="su-email">Email</label><input class="input" id="su-email" name="email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
-          <div class="field"><label for="su-pw">Password</label><span class="pw"><input class="input" id="su-pw" name="password" type="password" autocomplete="new-password" data-meter required><button type="button" data-act="toggle-pw">Show</button></span>
-            <div class="meter" aria-hidden="true"><i></i></div><div class="meter-label" aria-live="polite"></div>
-            <span class="hint">At least 10 characters. A few random words make a strong password.</span></div>
-          <div class="field"><label for="su-pw2">Confirm password</label><input class="input" id="su-pw2" name="confirm" type="password" autocomplete="new-password" required></div>
-          <div class="notice warn">We can’t reset your password for you. You’ll get a recovery key in the next step, so keep it somewhere safe.</div>
+      <section data-view="unlock" hidden>
+        <h1>Unlock Vault</h1>
+        <p class="sub" id="unlock-sub"></p>
+        <button class="btn btn-primary btn-lg btn-block" type="button" data-act="unlock-passkey" id="btn-unlock-passkey" hidden><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg>Unlock with passkey</button>
+        <div class="auth-sep" id="unlock-sep" hidden>or use your passcode</div>
+        <form data-form="unlock" novalidate>
+          <div class="field"><label for="uk-pc">Passcode</label><span class="pw"><input class="input secret" id="uk-pc" name="vault-unlock" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required><button type="button" data-act="toggle-pw">Show</button></span></div>
           <div class="form-error" role="alert" hidden></div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit">Create account</button>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Unlock</button>
         </form>
-        <div class="auth-alt"><span class="muted">Already have an account?</span><button class="link-btn" type="button" data-act="show-view" data-to="signin">Sign in</button></div>
+        <div class="auth-alt"><button class="link-btn" type="button" data-act="forgot">Forgot passcode?</button><button class="link-btn" type="button" data-act="signout" id="btn-unlock-out">Sign out</button></div>
+      </section>
+
+      <section data-view="setup" hidden>
+        <h1>Create a passcode</h1>
+        <p class="sub" id="setup-sub">This protects your vault. You’ll enter it every time you open Vault, and it’s never saved on this device.</p>
+        <form data-form="setup" novalidate>
+          <div class="field"><label for="sp-pc">Passcode</label><span class="pw"><input class="input secret" id="sp-pc" name="vault-new" data-meter type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required><button type="button" data-act="toggle-pw">Show</button></span>
+            <div class="meter" aria-hidden="true"><i></i></div><div class="meter-label" aria-live="polite"></div>
+            <span class="hint">At least 10 characters. A few random words is a good passcode. A short PIN can be guessed by anyone who copies your files, so add a passkey on the next step for hardware protection.</span></div>
+          <div class="field"><label for="sp-pc2">Confirm passcode</label><input class="input secret" id="sp-pc2" name="vault-confirm" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required></div>
+          <div class="notice warn" id="setup-warn">We can’t reset your passcode for you. You’ll get a recovery key next. Keep it somewhere safe.</div>
+          <div class="form-error" role="alert" hidden></div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Create vault</button>
+        </form>
+        <div class="auth-alt"><button class="link-btn" type="button" data-act="signout" id="btn-setup-out">Cancel</button><span></span></div>
+      </section>
+
+      <section data-view="passkey-offer" hidden>
+        <h1>Add a passkey</h1>
+        <p class="sub">Unlock with Touch ID, Windows Hello, your phone or a security key instead of typing. Your passkey’s secret never leaves your authenticator, so someone who copies your files or has remote access to this computer can’t use it.</p>
+        <div class="form-error" id="pko-error" role="alert" hidden></div>
+        <button class="btn btn-primary btn-lg btn-block" type="button" data-act="pk-add-now" id="btn-pk-now"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg>Add a passkey</button>
+        <div class="auth-alt"><button class="link-btn" type="button" data-act="pk-skip">Skip for now</button><span></span></div>
+        <p class="hint mt-sm">You can add or remove a passkey later in Settings. Your passcode keeps working either way.</p>
       </section>
 
       <section data-view="recovery-key" hidden>
         <h1>Save your recovery key</h1>
-        <p class="sub">If you forget your password, this key is the only way back into your data. Vault can’t see it or reset it for you.</p>
+        <p class="sub">If you forget your passcode, this key (plus your Google sign-in) is the only way back into your data. Vault can’t see it or reset it for you.</p>
         <div class="key-box" id="rk-code" aria-label="Recovery key"></div>
         <div class="btn-row">
           <button class="btn btn-outline" type="button" data-act="copy-rk">Copy</button>
@@ -63,55 +78,17 @@
       </section>
 
       <section data-view="recover" hidden>
-        <h1>Reset your password</h1>
-        <p class="sub">Enter the recovery key you saved when you created your account.</p>
+        <h1>Reset your passcode</h1>
+        <p class="sub" id="recover-sub">Enter the recovery key you saved when you set up your vault. Any passkey will be removed, and you can add one again afterwards.</p>
         <form data-form="recover" novalidate>
-          <div class="field"><label for="rc-email">Email</label><input class="input" id="rc-email" name="email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
-          <div class="field"><label for="rc-key">Recovery key</label><input class="input mono" id="rc-key" name="key" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" required></div>
-          <div class="field"><label for="rc-pw">New password</label><span class="pw"><input class="input" id="rc-pw" name="password" type="password" autocomplete="new-password" data-meter required><button type="button" data-act="toggle-pw">Show</button></span>
+          <div class="field"><label for="rc-key">Recovery key</label><input class="input mono" id="rc-key" name="vault-recovery" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" required></div>
+          <div class="field"><label for="rc-pc">New passcode</label><span class="pw"><input class="input secret" id="rc-pc" name="vault-new2" data-meter type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required><button type="button" data-act="toggle-pw">Show</button></span>
             <div class="meter" aria-hidden="true"><i></i></div><div class="meter-label" aria-live="polite"></div></div>
-          <div class="field"><label for="rc-pw2">Confirm new password</label><input class="input" id="rc-pw2" name="confirm" type="password" autocomplete="new-password" required></div>
+          <div class="field"><label for="rc-pc2">Confirm new passcode</label><input class="input secret" id="rc-pc2" name="vault-confirm2" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" required></div>
           <div class="form-error" role="alert" hidden></div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit">Reset password</button>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Reset passcode</button>
         </form>
-        <div class="auth-alt"><button class="link-btn" type="button" data-act="show-view" data-to="signin">Back to sign in</button></div>
-      </section>
-
-      <section data-view="locked" hidden>
-        <h1>Locked</h1>
-        <p class="sub" id="locked-email"></p>
-        <form data-form="unlock" novalidate>
-          <input type="email" id="lk-user" autocomplete="username" hidden>
-          <div class="field"><label for="lk-pw">Password</label><span class="pw"><input class="input" id="lk-pw" name="password" type="password" autocomplete="current-password" required><button type="button" data-act="toggle-pw">Show</button></span></div>
-          <div class="form-error" role="alert" hidden></div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit">Unlock</button>
-        </form>
-        <div class="auth-alt"><button class="link-btn" type="button" data-act="signout">Sign out</button><span></span></div>
-      </section>
-
-      <section data-view="local-setup" hidden>
-        <h1>Use on this device</h1>
-        <p class="sub">Your data is encrypted with a password and stored in this browser only. Nothing is sent to a server, and it won’t sync to other devices.</p>
-        <form data-form="local-setup" novalidate>
-          <div class="field"><label for="ls-pw">Choose a password</label><span class="pw"><input class="input" id="ls-pw" name="password" type="password" autocomplete="new-password" data-meter required><button type="button" data-act="toggle-pw">Show</button></span>
-            <div class="meter" aria-hidden="true"><i></i></div><div class="meter-label" aria-live="polite"></div></div>
-          <div class="field"><label for="ls-pw2">Confirm password</label><input class="input" id="ls-pw2" name="confirm" type="password" autocomplete="new-password" required></div>
-          <div class="notice warn">There’s no recovery option on this device. If you forget the password, the data can’t be opened. Export a backup from Settings.</div>
-          <div class="form-error" role="alert" hidden></div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit">Start using Vault</button>
-        </form>
-        <div class="auth-alt" id="ls-alt"><button class="link-btn" type="button" data-act="show-view" data-to="signin">Sign in to an account instead</button><span></span></div>
-      </section>
-
-      <section data-view="local-unlock" hidden>
-        <h1>Unlock this device</h1>
-        <p class="sub">Local data · stored in this browser only.</p>
-        <form data-form="local-unlock" novalidate>
-          <div class="field"><label for="lu-pw">Password</label><span class="pw"><input class="input" id="lu-pw" name="password" type="password" autocomplete="off" required><button type="button" data-act="toggle-pw">Show</button></span></div>
-          <div class="form-error" role="alert" hidden></div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit">Unlock</button>
-        </form>
-        <div class="auth-alt" id="lu-alt"><button class="link-btn" type="button" data-act="show-view" data-to="signin">Sign in to an account instead</button><span></span></div>
+        <div class="auth-alt"><button class="link-btn" type="button" data-act="back-unlock">Back</button><span></span></div>
       </section>
     </div>
   </div>
@@ -154,22 +131,28 @@
     <section id="page-settings" hidden>
       <div class="page-head"><h1>Settings</h1></div>
 
-      <div class="set-section panel-wrap">
+      <div class="set-section">
         <h2>Account</h2>
         <div class="panel">
-          <div class="set-row" data-only="cloud"><div><b>Email</b><span class="d" id="set-email"></span></div></div>
-          <div class="set-row" data-only="local"><div><b>Storage</b><span class="d">This device only. Encrypted in this browser and not synced.</span></div></div>
-          <div class="set-row"><div><b>Password</b><span class="d">Change the password you use to unlock Vault.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="change-password">Change password</button></div>
-          <div class="set-row" data-only="cloud"><div><b>Recovery key</b><span class="d">Replace your recovery key. The old one stops working.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="new-recovery">New recovery key</button></div>
-          <div class="set-row" data-only="cloud"><div><b>Devices</b><span class="d">Sign out everywhere, including this device.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="signout-all">Sign out everywhere</button></div>
+          <div class="set-row" data-only="cloud"><div><b>Signed in with Google</b><span class="d" id="set-email"></span></div><button class="btn btn-outline btn-sm" type="button" data-act="signout-all">Sign out everywhere</button></div>
+          <div class="set-row" data-only="local"><div><b>Storage</b><span class="d">This device only. Encrypted in this browser and not synced. Clearing your browser data deletes it.</span></div></div>
         </div>
       </div>
 
       <div class="set-section">
-        <h2>Preferences</h2>
+        <h2>Security</h2>
         <div class="panel">
-          <div class="set-row"><div><b>Auto-lock</b><span class="d">Lock Vault after this much time without activity.</span></div>
-            <select class="select auto" id="set-autolock" aria-label="Auto-lock"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
+          <div class="set-row"><div><b>Passcode</b><span class="d">Required every time you open Vault. It’s never saved on this device.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="change-passcode">Change passcode</button></div>
+          <div class="set-row" id="row-passkey" hidden><div><b>Passkey</b><span class="d" id="passkey-status"></span></div><button class="btn btn-outline btn-sm" type="button" id="btn-passkey" data-act="passkey-toggle">Add passkey</button></div>
+          <div class="set-row" data-only="cloud"><div><b>Recovery key</b><span class="d">Replace your recovery key. The old one stops working.</span></div><button class="btn btn-outline btn-sm" type="button" data-act="new-recovery">New recovery key</button></div>
+          <div class="set-row"><div><b>Auto-lock</b><span class="d">Lock Vault after this much time without activity. Locking clears your keys from memory.</span></div>
+            <select class="select auto" id="set-autolock" aria-label="Auto-lock"><option value="0">When I leave this tab</option><option value="1">After 1 minute</option><option value="5">After 5 minutes</option><option value="15">After 15 minutes</option><option value="30">After 30 minutes</option></select></div>
+        </div>
+      </div>
+
+      <div class="set-section">
+        <h2>Appearance</h2>
+        <div class="panel">
           <div class="set-row"><div><b>Theme</b><span class="d">Match your system, or choose light or dark.</span></div>
             <select class="select auto" id="set-theme" aria-label="Theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
         </div>
@@ -210,7 +193,7 @@
         <div class="field"><label for="code-issuer">Service</label><input class="input" id="code-issuer" autocomplete="off" placeholder="GitHub"></div>
         <div class="field"><label for="code-name">Account</label><input class="input" id="code-name" autocomplete="off" placeholder="you@example.com"></div>
       </div>
-      <div class="field"><label for="code-secret">Secret key</label><span class="pw"><input class="input mono" id="code-secret" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the key, or an otpauth:// link"><button type="button" data-act="toggle-pw">Show</button></span></div>
+      <div class="field"><label for="code-secret">Secret key</label><span class="pw"><input class="input mono secret" id="code-secret" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="Paste the key, or an otpauth:// link"><button type="button" data-act="toggle-pw">Show</button></span></div>
       <details><summary>Advanced</summary>
         <div class="row2">
           <div class="field"><label for="code-period">Refresh (seconds)</label><input class="input" id="code-period" type="number" min="10" max="120" value="30"></div>
@@ -268,23 +251,23 @@
     <header class="dlg-head"><h2 id="prompt-title">Confirm</h2><button class="icon-btn" type="button" data-act="close-dialog" aria-label="Close"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-x"></use></svg></button></header>
     <div class="dlg-body">
       <p id="prompt-help"></p>
-      <div class="field"><label for="prompt-input" id="prompt-label">Password</label><span class="pw"><input class="input" id="prompt-input" type="password" autocomplete="off"><button type="button" data-act="toggle-pw">Show</button></span></div>
+      <div class="field"><label for="prompt-input" id="prompt-label">Passcode</label><span class="pw"><input class="input secret" id="prompt-input" name="vault-prompt" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"><button type="button" data-act="toggle-pw">Show</button></span></div>
     </div>
     <footer class="dlg-foot"><button class="btn btn-outline" type="button" data-act="close-dialog">Cancel</button><button class="btn btn-primary" type="submit" id="prompt-ok">Continue</button></footer>
   </form>
 </dialog>
 
-<dialog id="dlg-password" aria-labelledby="pwd-title">
-  <form data-form="password" novalidate>
-    <header class="dlg-head"><h2 id="pwd-title">Change password</h2><button class="icon-btn" type="button" data-act="close-dialog" aria-label="Close"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-x"></use></svg></button></header>
+<dialog id="dlg-passcode" aria-labelledby="pwd-title">
+  <form data-form="passcode" novalidate>
+    <header class="dlg-head"><h2 id="pwd-title">Change passcode</h2><button class="icon-btn" type="button" data-act="close-dialog" aria-label="Close"><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-x"></use></svg></button></header>
     <div class="dlg-body">
-      <div class="field"><label for="pw-current">Current password</label><input class="input" id="pw-current" type="password" autocomplete="current-password"></div>
-      <div class="field"><label for="pw-new">New password</label><input class="input" id="pw-new" type="password" autocomplete="new-password" data-meter>
+      <div class="field"><label for="pw-current">Current passcode</label><input class="input secret" id="pw-current" name="vault-cur" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"></div>
+      <div class="field"><label for="pw-new">New passcode</label><input class="input secret" id="pw-new" name="vault-new3" data-meter type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other">
         <div class="meter" aria-hidden="true"><i></i></div><div class="meter-label" aria-live="polite"></div></div>
-      <div class="field"><label for="pw-confirm">Confirm new password</label><input class="input" id="pw-confirm" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="pw-confirm">Confirm new passcode</label><input class="input secret" id="pw-confirm" name="vault-confirm3" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other"></div>
       <div class="form-error" role="alert" hidden></div>
     </div>
-    <footer class="dlg-foot"><button class="btn btn-outline" type="button" data-act="close-dialog">Cancel</button><button class="btn btn-primary" type="submit">Change password</button></footer>
+    <footer class="dlg-foot"><button class="btn btn-outline" type="button" data-act="close-dialog">Cancel</button><button class="btn btn-primary" type="submit">Change passcode</button></footer>
   </form>
 </dialog>
 
@@ -304,6 +287,7 @@
 <script src="js/jsQR.js"></script>
 <script src="js/crypto.js"></script>
 <script src="js/totp.js"></script>
+<script src="js/passkey.js"></script>
 <script src="js/store.js"></script>
 <script src="js/app.js"></script>
 </body>

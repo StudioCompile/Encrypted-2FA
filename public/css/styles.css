@@ -299,3 +299,8 @@ dialog::backdrop { background: var(--overlay); }
   .stats > div:nth-child(-n+2), .grid4 > *:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 600px) { .stats, .grid4, .steps { grid-template-columns: 1fr; } .stats > div, .grid4 > *, .steps li { border-right: 0; border-bottom: 1px solid var(--line); } }
+/* Passcode fields are plain text inputs drawn as dots, so browsers don't offer to save them. */
+.secret { -webkit-text-security: disc; text-security: disc; }
+.secret.show { -webkit-text-security: none; text-security: none; }
+.g-btn { display: flex; justify-content: center; min-height: 44px; margin-bottom: 4px; }
+.g-btn:empty { display: none; }

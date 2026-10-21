@@ -6,7 +6,7 @@ A professional tool: square, high contrast, one accent colour. No gradients, no 
 1. **Square.** Every border radius is 0. Buttons, inputs, panels, dialogs, toasts, badges.
 2. **High contrast.** Text is pure black on white or pure white on black. Control borders are at least 4.5:1 against the background; dividers are the only low-contrast lines.
 3. **One accent.** Blue marks the primary action, the active nav item and focus. It is never used decoratively.
-4. **Plain language.** One account, three places: Codes, Notes & files, Settings.
+4. **Plain language.** One vault, three places: Codes, Notes & files, Settings. Sign in with Google or use no account; unlock with a passcode or passkey.
 5. **Codes are data.** Codes use the monospace face with tabular figures.
 
 ## Tokens (`css/styles.css`)

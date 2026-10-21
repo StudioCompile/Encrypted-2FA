@@ -35,14 +35,10 @@ export function safeEqual(a, b) {
 
 const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
 export const isB64 = (s, len) => typeof s === 'string' && s.length === len && B64.test(s);
+export const isB64Max = (s, max) => typeof s === 'string' && s.length > 0 && s.length <= max && B64.test(s);
 export const AUTH_LEN = 44;      // 32 bytes
+export const SALT_LEN = 24;      // 16 bytes
 export const WRAPPED_LEN = 80;   // 12-byte IV + 32-byte key + 16-byte tag
-
-export function normalizeEmail(email) {
-  const e = String(email || '').trim().toLowerCase();
-  if (e.length < 5 || e.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new HttpError(400, 'Enter a valid email address.');
-  return e;
-}
 
 /* ---------- sessions ---------- */
 const SESSION_DAYS = 14;
@@ -62,58 +58,50 @@ export function cookieHeader(request, token, maxAge = SESSION_DAYS * 86400) {
   return `${cookieName(request)}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
 }
 
-export async function createSession(env, request, userId) {
+export async function createSession(env, request, accountId) {
   const token = randomToken(32), now = Date.now();
   await env.DB.batch([
-    env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now),
-    env.DB.prepare('INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
-      .bind(await sha256Hex(token), userId, now, now + SESSION_DAYS * 86400_000)
+    env.DB.prepare('DELETE FROM vault_sessions WHERE expires_at < ?').bind(now),
+    env.DB.prepare('INSERT INTO vault_sessions (token_hash, account_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(await sha256Hex(token), accountId, now, now + SESSION_DAYS * 86400_000)
   ]);
   return cookieHeader(request, token);
 }
 
-export async function requireUser({ request, env }) {
+export async function requireAccount({ request, env }) {
   const token = readToken(request);
   if (!token) throw new HttpError(401, 'You’re signed out.');
   const tokenHash = await sha256Hex(token);
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.wrapped_dek, u.auth_salt, u.auth_hash, u.failed_logins, u.locked_until, s.token_hash
-       FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT a.*, s.token_hash AS token_hash
+       FROM vault_sessions s JOIN vault_accounts a ON a.id = s.account_id
       WHERE s.token_hash = ? AND s.expires_at > ?`).bind(tokenHash, Date.now()).first();
   if (!row) throw new HttpError(401, 'Your session expired. Sign in again.');
   return row;
 }
 
-/* ---------- credential checks with lockout ---------- */
+/* ---------- proofs (passcode / recovery key) with lockout ---------- */
 const MAX_FAILS = 8, LOCK_MS = 15 * 60_000;
+const MESSAGES = { pc: 'Incorrect passcode.', rc: 'That recovery key is incorrect.' };
 
-export async function checkSecret(env, user, kind, provided) {
+export async function checkSecret(env, acct, kind, provided) {
+  const salt = kind === 'rc' ? acct.rc_salt : acct.pc_auth_salt;
+  const hash = kind === 'rc' ? acct.rc_hash : acct.pc_auth_hash;
+  if (!salt || !hash) throw new HttpError(409, 'Finish setting up your vault first.');
   const now = Date.now();
-  if (user.locked_until > now) {
-    const mins = Math.ceil((user.locked_until - now) / 60_000);
+  if (acct.locked_until > now) {
+    const mins = Math.ceil((acct.locked_until - now) / 60_000);
     throw new HttpError(429, `Too many failed attempts. Try again in ${mins} minute${mins === 1 ? '' : 's'}.`);
   }
-  const salt = kind === 'rc' ? user.rc_salt : user.auth_salt;
-  const hash = kind === 'rc' ? user.rc_hash : user.auth_hash;
-  const ok = safeEqual(await sha256Hex(salt + ':' + provided), hash);
-  if (ok) {
-    if (user.failed_logins) await env.DB.prepare('UPDATE users SET failed_logins = 0, locked_until = 0 WHERE id = ?').bind(user.id).run();
+  if (safeEqual(await sha256Hex(salt + ':' + provided), hash)) {
+    if (acct.failed) await env.DB.prepare('UPDATE vault_accounts SET failed = 0, locked_until = 0 WHERE id = ?').bind(acct.id).run();
     return;
   }
-  const fails = user.failed_logins + 1;
-  if (fails >= MAX_FAILS) await env.DB.prepare('UPDATE users SET failed_logins = 0, locked_until = ? WHERE id = ?').bind(now + LOCK_MS, user.id).run();
-  else await env.DB.prepare('UPDATE users SET failed_logins = ? WHERE id = ?').bind(fails, user.id).run();
-  throw new HttpError(401, kind === 'rc' ? 'The email or recovery key is incorrect.' : 'Incorrect email or password.');
+  const fails = acct.failed + 1;
+  if (fails >= MAX_FAILS) await env.DB.prepare('UPDATE vault_accounts SET failed = 0, locked_until = ? WHERE id = ?').bind(now + LOCK_MS, acct.id).run();
+  else await env.DB.prepare('UPDATE vault_accounts SET failed = ? WHERE id = ?').bind(fails, acct.id).run();
+  throw new HttpError(401, MESSAGES[kind]);
 }
-
-// Burn roughly the same time for unknown emails so response timing doesn't reveal which accounts exist.
-export async function dummyCheck(kind) {
-  await sha256Hex('x:' + kind);
-  throw new HttpError(401, kind === 'rc' ? 'The email or recovery key is incorrect.' : 'Incorrect email or password.');
-}
-
-export const findUserByEmail = (env, email) =>
-  env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
 
 export async function newSecretRecord(authKey) {
   const salt = randomToken(16);

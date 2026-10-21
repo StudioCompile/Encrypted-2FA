@@ -11,50 +11,57 @@
 </head>
 <body>
 <header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
-  <nav class="site-nav" aria-label="Main"><a href="index.html">Home</a><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html#signup">Create account</a></nav></header>
+  <nav class="site-nav" aria-label="Main"><a href="index.html">Home</a><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html">Open Vault</a></nav></header>
 <main><article class="doc">
   <h1>How Vault protects your data</h1>
-  <p class="lead">Vault is built so the server never sees your password, your keys or your data. Here is exactly what happens, and what it can’t do.</p>
+  <p class="lead">Vault assumes someone else might get onto your computer. So nothing stored on it can open your data, and nothing is remembered between visits. Here is exactly how that works, and where the limits are.</p>
+
+  <section><h2>You unlock it every time</h2>
+    <p>When you close, reload or lock Vault, your keys are erased from memory. To open it again you enter your passcode or use your passkey. There is no “remember me” and no saved password. The passcode field is drawn so browsers don’t offer to save it.</p></section>
 
   <section><h2>Encryption</h2>
-    <p>Your password is stretched with PBKDF2-SHA256 (600,000 iterations) in your browser, then split with HKDF into two unrelated values: a key-encryption key that never leaves your device, and an authentication key used to sign in.</p>
-    <p>Your data is encrypted with a random 256-bit data key using AES-256-GCM. That data key is stored only in wrapped (encrypted) form: once under your password-derived key, and once under your recovery key. Every item has its own random IV, and its id is bound into the encryption, so items can’t be swapped or tampered with undetected.</p>
-    <p>Changing your password only re-wraps the data key. It doesn’t need to touch your items.</p></section>
+    <p>Everything you store is encrypted with a random 256-bit data key using AES-256-GCM. Each item has its own random IV, and the item’s id is bound into the encryption so items can’t be swapped or altered unnoticed.</p>
+    <p>The data key is never stored in the clear. It is stored only <em>wrapped</em>, in up to three ways, and any one of them opens it:</p>
+    <table><thead><tr><th>Unlocker</th><th>How the wrapping key is made</th></tr></thead><tbody>
+      <tr><td>Passcode</td><td>PBKDF2-SHA256 with 600,000 iterations and a random salt, then HKDF. Needs at least 10 characters.</td></tr>
+      <tr><td>Passkey (optional)</td><td>The WebAuthn PRF extension: your authenticator derives a secret from a salt, only after you verify with biometrics or a PIN. The secret never leaves the authenticator and is never stored, so copying the browser’s files gets an attacker nothing.</td></tr>
+      <tr><td>Recovery key (Google accounts)</td><td>A random 160-bit key shown once at setup. It is useless without also being signed in to your Google account.</td></tr>
+    </tbody></table>
+    <p>Changing your passcode re-wraps one key. It doesn’t touch your items.</p></section>
+
+  <section><h2>Google sign-in</h2>
+    <p>Google only proves which account you are, so Vault knows whose encrypted data to fetch. The server checks Google’s signed token (signature, audience, expiry, and a one-time nonce). Google never sees your passcode, keys or data, and signing in with Google does not unlock anything by itself. You still enter your passcode or use your passkey.</p>
+    <p>With a Google account, the server only releases your wrapped key after a correct passcode proof, and it locks unlocking for 15 minutes after 8 wrong tries. That limits guessing even if someone has your browser session.</p></section>
+
+  <section><h2>No account</h2>
+    <p>The same encryption, but the encrypted data lives only in your browser’s IndexedDB. Nothing is sent anywhere. Because there is no server to rate-limit guesses, a short passcode could be guessed by someone who copies your files, so use a long passcode and add a passkey. Clearing your browser data deletes the vault, so export a backup from Settings.</p></section>
 
   <section><h2>What the server stores</h2>
     <table><thead><tr><th>Stored</th><th>Form</th></tr></thead><tbody>
-      <tr><td>Your email</td><td>Plain text (needed to sign you in)</td></tr>
-      <tr><td>Password</td><td>Never sent. The server keeps a salted hash of the derived authentication key.</td></tr>
+      <tr><td>Your Google email and id</td><td>Plain text (to find your vault)</td></tr>
+      <tr><td>Passcode</td><td>Never sent. The server keeps a salted hash of a derived proof, not the passcode.</td></tr>
       <tr><td>Codes, notes, files</td><td>Ciphertext only</td></tr>
+      <tr><td>Wrapped keys, passkey id and salts</td><td>Useless without your passcode, passkey or recovery key</td></tr>
       <tr><td>Metadata</td><td>Number of items, their sizes and last-modified times</td></tr>
     </tbody></table></section>
 
-  <section><h2>Recovery key</h2>
-    <p>When you create an account you get a random 160-bit recovery key. It can unlock your data key if you forget your password. We store only a hash of it and a copy of the data key wrapped by it, which is useless without the key itself. If you lose both your password and your recovery key, your data can’t be recovered by anyone.</p></section>
-
-  <section><h2>This device only</h2>
-    <p>Local mode uses the same encryption, but the encrypted data lives in your browser’s IndexedDB and nothing is sent anywhere. Clearing your browser data deletes it, so export a backup from Settings.</p></section>
-
-  <section><h2>Sessions and locking</h2>
+  <section><h2>Other protections</h2>
     <ul>
-      <li>Sign-in sessions use an HttpOnly, SameSite=Strict cookie that scripts can’t read.</li>
-      <li>Your keys exist only in memory. Reloading the page or locking clears them, and you unlock again with your password.</li>
-      <li>Vault locks itself after 5 minutes of inactivity by default. You can change this in Settings.</li>
-      <li>Eight wrong password attempts lock the account for 15 minutes.</li>
-      <li>A strict Content Security Policy blocks third-party scripts, and Vault loads nothing from other sites.</li>
+      <li>Auto-lock after 1 to 30 minutes of inactivity, or as soon as you leave the tab.</li>
+      <li>Session cookies are HttpOnly and SameSite=Strict. Writes from other sites are refused.</li>
+      <li>A strict Content Security Policy. The app page allows only Google’s sign-in script, and nothing else loads from other sites.</li>
+      <li>Backups can be protected with their own passphrase.</li>
     </ul></section>
-
-  <section><h2>Backups</h2>
-    <p>Exports can be protected with a passphrase (AES-256-GCM, PBKDF2 key). An export without a passphrase is plain text, and Vault warns you before it’s created.</p></section>
 
   <section><h2>Limits to know about</h2>
     <ul>
-      <li>Vault can’t protect a device that already has malware, and a weak password is the weakest link. Use a long, unique one.</li>
-      <li>As with any web app, you trust the site to serve you the correct code. If you self-host Vault, that’s you.</li>
-      <li>Your email address and usage metadata are visible to whoever runs the server.</li>
+      <li><b>While Vault is unlocked,</b> malware or someone controlling your computer remotely can see what you can see. Locking is what protects you. Use short auto-lock times.</li>
+      <li>Not every device supports passkey unlock. It needs the PRF extension, which most current phones, Macs, and security keys have, while support in Windows and some browsers varies. Vault tells you when it’s unavailable, and your passcode always works.</li>
+      <li>Passkeys are tied to the site address you set up on, and a passkey stored only on one device is lost with it. Keep your passcode and recovery key.</li>
+      <li>As with any web app, you trust the site to serve you the right code. If you self-host Vault, that’s you.</li>
       <li>Keep your 2FA services’ own backup codes. Vault is another copy, not a replacement.</li>
     </ul></section>
 </article></main>
-<footer class="site-footer"><span>Vault encrypts your data on your device before it’s stored.</span><nav><a href="index.html">Home</a><a href="app.html">Sign in</a><a href="app.html#signup">Create account</a><a href="security.html">Security</a></nav></footer>
+<footer class="site-footer"><span>Vault encrypts your data on your device and never stores the key to it.</span><nav><a href="index.html">Home</a><a href="app.html">Sign in</a><a href="app.html#local">No account</a><a href="security.html">Security</a></nav></footer>
 </body>
 </html>
