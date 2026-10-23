@@ -1,99 +1,51 @@
 # Vault
 
-A private place for your 2FA codes, notes and files. Everything is locked on your device, and you open it with a **passcode** (or a **passkey**) every time.
+Encrypted 2FA codes, notes and files. Sign in with an account to sync across devices, or use it on one device with no account. Everything is encrypted in the browser before it is stored, and the server (a Cloudflare Worker + D1) only ever holds ciphertext.
 
-## The three words you'll see
+## Deploy to Cloudflare
 
-| Word | What it is |
-|---|---|
-| **Passcode** | What you type to open Vault. At least 10 characters. |
-| **Passkey** | Optional. Lets you open Vault with your fingerprint, face, phone or security key instead of typing. |
-| **Recovery key** | Google accounts only. A long code shown once. It's the only way back in if you forget your passcode. |
+Vault is a single Cloudflare **Worker** (static site + API) with a **D1** database. Nothing needs to be created by hand.
 
-## Two ways to use it
+**From GitHub (Workers Builds):** push this repo, then in Workers & Pages create/connect the project with
+* Build command: *(none)*
+* Deploy command: `npx wrangler deploy`
+* Root directory: `/`
 
-* **Continue with Google**: your locked data syncs between your devices. Google only confirms who you are. It can't see your data.
-* **No account**: everything stays in this one browser. Nothing is sent anywhere. If you forget your passcode, or clear your browser data, it's gone, so export a backup from Settings.
+The Worker name in `wrangler.toml` (`encrypted-2fa`) must match the project name. On the first deploy Wrangler creates the `vault` D1 database, and the Worker creates its tables on the first request. If your Cloudflare account can't auto-create it, run `npx wrangler d1 create vault` once and add `database_id = "<id>"` under `[[d1_databases]]` in `wrangler.toml`.
 
----
+**From your computer:** `npm install && npx wrangler login && npm run deploy`
 
-## Set it up (about 10 minutes, once)
+Optional: set the variable `ALLOW_SIGNUPS` to `false` (Settings → Variables) to close registration. Add a Cloudflare WAF rate-limiting rule for `/api/login` and `/api/recover/*` as well; the app already locks an account for 15 minutes after 8 failed attempts.
 
-### 1. Google sign-in
-
-Your Client ID is already in `wrangler.toml`:
-
-```
-407397476387-6dmm67mc66n2i3d798cp44pk7oicftqt.apps.googleusercontent.com
-```
-
-You only need to tell Google which website may use it:
-
-1. Open [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials) and click that Client ID.
-2. Under **Authorized JavaScript origins**, add your site address, for example `https://encrypted-2fa.dislabed.workers.dev`.
-3. To test on your own computer, also add `http://localhost:8788`.
-4. Click **Save**. Google can take a few minutes to start accepting it.
-
-**If the Google button says "origin_mismatch" or doesn't appear,** the address in step 2 is missing or has a typo. It must match what's in your browser's address bar exactly (no trailing slash).
-
-### 2. Put it online
-
-**From GitHub:** connect the repository in Cloudflare. Deploy command: `npx wrangler deploy`. No build command.
-
-**From your computer:**
+## Run locally
 
 ```bash
 npm install
-npx wrangler login
-npm run deploy
+npm run dev                           # http://localhost:8788 (local D1 is created automatically)
+npm test                              # API + UI tests (start `npm run dev` first)
 ```
 
-Cloudflare creates the database for you the first time. If it says it can't, run `npx wrangler d1 create vault` once, then paste the `database_id` it prints under `[[d1_databases]]` in `wrangler.toml`.
-
-### 3. Try it
-
-Open your site, choose **Continue with Google**, make a passcode, and save your recovery key.
-
----
-
-## Optional settings (in `wrangler.toml`)
-
-* `ALLOWED_EMAILS = "you@gmail.com"` lets only these Google accounts sign in. Use this if Vault is just for you.
-* `ALLOW_SIGNUPS = "false"` stops new accounts from being created. Existing ones keep working.
-
-## Run it on your computer
-
-```bash
-npm install
-npm run dev        # opens at http://localhost:8788
-```
-
-"No account" mode works with no setup. For Google sign-in, add `http://localhost:8788` as described above.
-
-## Tests
-
-```bash
-npx wrangler dev --port 8788 \
-  --var GOOGLE_CLIENT_ID:test-client-id.apps.googleusercontent.com \
-  --var GOOGLE_JWKS_URL:http://127.0.0.1:9988/jwks
-npm test
-```
-
-`GOOGLE_JWKS_URL` is only for tests. Never set it on your live site.
-
-## Good to know
-
-* **Passkeys need a device that supports them.** Most current phones, Macs and security keys do. Windows and some browsers vary. If yours doesn't, Vault says so, and your passcode always works.
-* **While Vault is unlocked,** anyone controlling your computer can see what you see. In Settings, set Auto-lock to "When I leave this tab" for the strictest option.
-* **Limits:** files up to 1 MB with Google or 10 MB with no account, notes about 80 KB, 2,000 items.
-* Keep each website's own backup codes too. Vault is another copy, not a replacement.
-
-## For developers
-
-How the encryption works and what the server stores is on the Security page (`public/security.html`). Styling rules are in `DESIGN.md`.
+## How it's put together
 
 ```
-public/       the website (home, app, security)
-src/          the Cloudflare Worker and its API
-tests/        API and UI tests
+public/            static site (landing, app, security page)
+  js/crypto.js     key derivation, AES-GCM, recovery key
+  js/totp.js       TOTP + otpauth / Google Authenticator import
+  js/store.js      cloud API client and local IndexedDB store
+  js/app.js        the UI
+src/worker.js      Worker entry and router
+src/api/           register, login, items, password, recovery…
+src/schema.js      D1 tables (created on first request; schema.sql is the same)
 ```
+
+* **Account mode:** password → PBKDF2 (600k) → HKDF → a key-wrapping key and a separate sign-in key. A random data key encrypts every item (AES-256-GCM) and is stored wrapped by your password and by your recovery key. Changing your password re-wraps one key; no items are re-encrypted.
+* **Local mode:** the same scheme, stored in IndexedDB, no network.
+* Limits: files up to 1 MB on a cloud account (D1 row size), 10 MB locally; notes about 80 KB; 2,000 items per account.
+
+## Changes from v1
+
+* One account (or one local store) instead of multiple vaults.
+* Removed passkey unlock: the old implementation derived its key from the credential ID, which is stored next to the wrapped secret, so it didn't add protection. Share links and per-item extra passcodes were removed too. Accounts replace sharing.
+* Added recovery key, change password, sign out everywhere, search, editable notes, auto-lock setting, encrypted backups, SHA-256/512 and 8-digit codes, and Google Authenticator import.
+* Old v1 export files (`vault-export-*.json`) can be imported from Settings → Import (you'll be asked each old vault's password).
+* Fonts are the system fonts and QR scanning (jsQR) is bundled, so the page loads nothing from other sites.

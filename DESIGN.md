@@ -1,30 +1,43 @@
 # Vault — Design System
 
-Friendly and calm: rounded corners, soft outlines, plenty of colour, no gradients. Everything eases in and out.
+A professional tool: square, high contrast, one accent colour. No gradients, no glows, no rounded corners.
 
 ## Principles
-1. **Rounded.** Cards 22px, controls 14px, small items 10px, toast and pills fully round.
-2. **Soft outlines.** Borders are barely lighter than the surface. Hover and focus use colour, not heavy lines. Focus rings stay clearly visible.
-3. **Colour with meaning.** Violet is the main action. Each code and note gets its own colour (six in rotation). Red only means danger or "about to expire".
-4. **No gradients.** Flat colour only. Tints use `color-mix()` on a single colour.
-5. **Smooth.** Pages rise in, dialogs pop, buttons lift on hover and press in on click, the countdown glides. All motion stops for people who prefer reduced motion.
-6. **Plain words.** Three places: Codes, Notes, Settings. Short labels, one idea per screen. Terms: passcode (you type it), passkey (fingerprint or face), recovery key (backup).
+1. **Square.** Every border radius is 0. Buttons, inputs, panels, dialogs, toasts, badges.
+2. **High contrast.** Text is pure black on white or pure white on black. Control borders are at least 4.5:1 against the background; dividers are the only low-contrast lines.
+3. **One accent.** Blue marks the primary action, the active nav item and focus. It is never used decoratively.
+4. **Plain language.** One account, three places: Codes, Notes & files, Settings.
+5. **Codes are data.** Codes use the monospace face with tabular figures.
 
 ## Tokens (`css/styles.css`)
-Dark is the default look on dark systems; light follows the same names.
-| Token | Use |
-|---|---|
-| `--bg`, `--surface`, `--subtle` | Page, cards, hover and fields |
-| `--line`, `--border` | Soft dividers, input outlines |
-| `--accent`, `--accent-soft` | Main action, active nav, highlight tint |
-| `--c1`…`--c6` | Item colours: violet, mint, amber, coral, sky, pink |
-| `--danger`, `--ok`, `--warn` | State |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--bg` | `#ffffff` | `#000000` | Page |
+| `--surface` | `#ffffff` | `#0c0c0c` | Panels, sidebar |
+| `--subtle` | `#f0f0f0` | `#1b1b1b` | Hover, active nav, dialog footers |
+| `--line` | `#d4d4d4` | `#333333` | Row dividers |
+| `--edge` | `#8c8c8c` | `#5e5e5e` | Panel outlines |
+| `--border` | `#5c5c5c` | `#9a9a9a` | Inputs and outline buttons |
+| `--text` / `--muted` | `#000` / `#454545` | `#fff` / `#c4c4c4` | Text |
+| `--accent` | `#0047cc` | `#5c9dff` | Primary action, focus, active nav |
+| `--danger` / `--ok` / `--warn` | `#b00020` / `#0a6b2d` / `#8a5000` | `#ff6b6b` / `#4ade80` / `#ffc247` | State |
+
+Theme follows the system by default; Settings can force light or dark (`vault.theme` in localStorage, applied by `js/theme.js` before first paint).
+
+## Type
+System UI font stack and system monospace. Body 15px, page title 28px, section 20px. Weights 400/500/700.
 
 ## Components
-* **Buttons:** 42px (34 small, 52 large), rounded, lift on hover. One primary per view.
-* **Inputs:** 46px, soft outline, glow ring on focus.
-* **Code row:** coloured avatar, name, monospace code, seconds left, and a rounded countdown bar in the row colour that turns red at the end.
-* **Sidebar:** a floating rounded card with Codes, Notes, Settings and the lock button.
-* **Create-a-vault steps:** a small "Step 1 of 3" bar above each setup screen.
-* **Dialogs:** native `<dialog>`, soft blur behind, pop-in.
+* **Buttons:** 40px (32 small, 48 large). Primary (accent fill), outline, danger, ghost. One primary per view.
+* **Inputs:** 42px, 1px `--border`, 2px accent focus outline.
+* **Panel:** 1px `--edge` border, rows separated by `--line`.
+* **Code row:** avatar square, name, monospace code, seconds left, and a 3px countdown bar that turns red in the last 5 seconds.
+* **Dialogs:** native `<dialog>`, header / body / footer, footer on `--subtle`.
+* **Notices:** 4px left rule in accent, warning or danger colour.
 * **Icons:** [Lucide](https://lucide.dev) (ISC), built into `assets/icons.svg` by `npm run icons`.
+
+## Layout
+Sidebar 252px (Codes, Notes & files, Settings, account block with Lock and Sign out); content max 1000px. Below 820px the sidebar becomes a top bar with three tabs.
+
+## Accessibility
+Visible 2px focus ring, labelled controls, `role="alert"` errors, `aria-current` nav, reduced-motion support, and AA contrast in both themes.

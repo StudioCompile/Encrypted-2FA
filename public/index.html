@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vault — your 2FA codes, safe and simple</title>
-<meta name="description" content="Keep your 2FA codes, notes and files private. Locked every time, with Google sync or no account.">
+<title>Vault — encrypted 2FA codes, notes and files</title>
+<meta name="description" content="Keep 2FA codes, notes and files end-to-end encrypted. Sync with an account, or keep everything on your device.">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/styles.css">
@@ -12,56 +12,77 @@
 </head>
 <body>
 <header class="site-header"><a class="brand" href="index.html"><img class="logo" src="assets/logo.png" alt="" width="35" height="26">Vault</a>
-  <nav class="site-nav" aria-label="Main"><a href="security.html">Security</a><a class="btn btn-primary btn-sm" href="app.html">Open Vault</a></nav></header>
+  <nav class="site-nav" aria-label="Main"><a href="index.html">Home</a><a href="security.html">Security</a><a href="app.html">Sign in</a><a class="btn btn-primary btn-sm" href="app.html#signup">Create account</a></nav></header>
 
 <main class="wrap">
   <section class="hero">
     <div>
-      <h1>Your 2FA codes, safe and simple.</h1>
-      <p class="lead">Keep your login codes, notes and files private. Only you can open them.</p>
+      <h1>Your 2FA codes and private files. Encrypted before they leave your device.</h1>
+      <p class="lead">Vault is an authenticator and secure notebook in one. Sign in on any device to sync, or keep everything in your browser with no account at all.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary btn-lg" href="app.html">Get started</a>
-        <a class="btn btn-outline btn-lg" href="security.html">How it stays safe</a>
+        <a class="btn btn-primary btn-lg" href="app.html#signup">Create free account</a>
+        <a class="btn btn-outline btn-lg" href="app.html">Sign in</a>
       </div>
+      <p class="hero-note">Prefer no account? <a href="app.html#local">Use it on this device only</a>.</p>
     </div>
-    <aside class="preview" aria-label="Example">
-      <div class="preview-head"><strong>Codes</strong><span><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-lock"></use></svg> Example</span></div>
+    <aside class="preview" aria-label="Live preview">
+      <div class="preview-head"><strong>Codes</strong><span><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-lock"></use></svg> End-to-end encrypted</span></div>
       <ul class="list">
         <li class="code-row" data-secret="JBSWY3DPEHPK3PXP"><div><div class="code-name">GitHub</div><div class="code-sub">demo@example.com</div></div><div class="code-value"><span class="digits">––– –––</span><span class="secs"></span></div><div class="bar"><i></i></div></li>
         <li class="code-row" data-secret="GEZDGNBVGY3TQOJQ"><div><div class="code-name">Google</div><div class="code-sub">demo@gmail.com</div></div><div class="code-value"><span class="digits">––– –––</span><span class="secs"></span></div><div class="bar"><i></i></div></li>
         <li class="code-row" data-secret="MFRGGZDFMZTWQ2LK"><div><div class="code-name">AWS</div><div class="code-sub">root-account</div></div><div class="code-value"><span class="digits">––– –––</span><span class="secs"></span></div><div class="bar"><i></i></div></li>
       </ul>
-      <div class="preview-foot"><span>Not real accounts</span></div>
+      <div class="preview-foot"><span>Demo codes, refreshing live</span><span>Not real accounts</span></div>
     </aside>
   </section>
 
-  <section class="band">
-    <div class="sec-head"><h2>What it does</h2></div>
-    <div class="grid4">
-      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-shield"></use></svg><h3>2FA codes</h3><p>All your codes in one place.</p></article>
-      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-file"></use></svg><h3>Notes and files</h3><p>Keep private things safe.</p></article>
-      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-lock"></use></svg><h3>Always locked</h3><p>Open it with your passcode.</p></article>
-      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg><h3>Quick unlock</h3><p>Use your fingerprint or face.</p></article>
-    </div>
+  <section class="stats" aria-label="Key facts">
+    <div><small>Encryption</small><strong>AES-256-GCM</strong><span>Authenticated, tamper-evident</span></div>
+    <div><small>Key stretching</small><strong>600,000</strong><span>PBKDF2 iterations</span></div>
+    <div><small>Server can read</small><strong>Nothing</strong><span>Ciphertext only</span></div>
+    <div><small>Auto-lock</small><strong>5 min</strong><span>Adjustable in Settings</span></div>
   </section>
 
   <section class="band">
-    <div class="sec-head"><h2>Start in 3 steps</h2></div>
-    <ol class="steps">
-      <li><em>1</em><h3>Pick how to use it</h3><p>Google, or this device only.</p></li>
-      <li><em>2</em><h3>Make a passcode</h3><p>You type it to open Vault.</p></li>
-      <li><em>3</em><h3>Add your codes</h3><p>Scan the QR code a website shows.</p></li>
+    <div class="sec-head"><h2>Everything in one encrypted place</h2><p>No folders of vaults to manage. You have one account with codes, notes and files.</p></div>
+    <div class="grid4">
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-shield"></use></svg><h3>2FA codes</h3><p>Scan a QR code, paste a key or import from Google Authenticator. Codes refresh live with a countdown.</p></article>
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-note"></use></svg><h3>Notes and files</h3><p>Keep backup codes, IDs and documents next to your codes. Search across everything.</p></article>
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-cloud"></use></svg><h3>Sync or stay local</h3><p>Sign in on any device, or keep everything in one browser with no account.</p></article>
+      <article><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-key"></use></svg><h3>Recovery key</h3><p>Forget your password and your recovery key gets you back in. We never see either of them.</p></article>
+    </div>
+  </section>
+
+  <section class="band split">
+    <div class="sec-head"><h2>From password to key</h2><p>Your password is never sent or stored. It’s stretched on your device before anything is encrypted.</p><a class="btn btn-outline btn-sm" href="security.html">Read the details</a></div>
+    <ol class="chain">
+      <li><b>Your password</b><span>Typed, never sent</span></li>
+      <li><b>PBKDF2 · SHA-256</b><span>600,000 iterations</span></li>
+      <li><b>HKDF</b><span>Splits into a sign-in key and a key-wrapping key</span></li>
+      <li><b>Data key</b><span>Random AES-256 key, stored only in wrapped form</span></li>
+      <li class="end"><b>Your items</b><span>Each encrypted with its own random IV</span></li>
     </ol>
   </section>
 
   <section class="band">
-    <div class="sec-head"><h2>Which one should I pick?</h2></div>
+    <div class="sec-head"><h2>Start in three steps</h2></div>
+    <ol class="steps">
+      <li><em>1</em><h3>Create an account</h3><p>Or choose “this device only” to skip the account.</p></li>
+      <li><em>2</em><h3>Add your codes</h3><p>Scan the QR code a service shows you, paste its key, or import from another app.</p></li>
+      <li><em>3</em><h3>Save your recovery key</h3><p>Keep it somewhere safe. Vault locks itself when you’re away.</p></li>
+    </ol>
+  </section>
+
+  <section class="band">
+    <div class="sec-head"><h2>Choose how you store it</h2><p>Same app, same encryption. Pick where the encrypted data lives.</p></div>
     <table class="compare">
-      <thead><tr><th></th><th><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-cloud"></use></svg> Google</th><th><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-device"></use></svg> This device only</th></tr></thead>
+      <thead><tr><th></th><th><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-cloud"></use></svg> Account</th><th><svg class="i" aria-hidden="true"><use href="assets/icons.svg#i-device"></use></svg> This device only</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Works on all your devices</th><td>Yes</td><td>No</td></tr>
-        <tr><th scope="row">Needs an account</th><td>Yes</td><td>No</td></tr>
-        <tr><th scope="row">If you forget your passcode</th><td>Use your recovery key</td><td>Data is lost</td></tr>
+        <tr><th scope="row">Sync across devices</th><td>Yes</td><td>No</td></tr>
+        <tr><th scope="row">Sign-up</th><td>Email and password</td><td>None. Just a password.</td></tr>
+        <tr><th scope="row">Where data lives</th><td>Encrypted on our servers</td><td>Encrypted in your browser</td></tr>
+        <tr><th scope="row">If you forget your password</th><td>Reset with your recovery key</td><td>Not recoverable. Keep a backup.</td></tr>
+        <tr><th scope="row">File size limit</th><td>1 MB each</td><td>10 MB each</td></tr>
       </tbody>
     </table>
   </section>
@@ -69,15 +90,16 @@
   <section class="band">
     <div class="sec-head"><h2>Questions</h2></div>
     <div class="faq">
-      <details><summary>Can anyone read my codes?</summary><p>No. Only you can open them. <a href="security.html">Learn more</a>.</p></details>
-      <details><summary>Why type a passcode every time?</summary><p>So nobody else on your computer can get in. A passkey makes it quick.</p></details>
-      <details><summary>What if I forget my passcode?</summary><p>With Google, use your recovery key. On this device only, save a backup in Settings.</p></details>
+      <details><summary>Can you read my data?</summary><p>No. Everything is encrypted in your browser with a key derived from your password. The server only stores ciphertext and can’t decrypt it. <a href="security.html">Read how it works</a>.</p></details>
+      <details><summary>What if I forget my password?</summary><p>Use the recovery key you saved when you created the account. Without the password or the recovery key, nobody can decrypt your data, including us.</p></details>
+      <details><summary>Does it work offline?</summary><p>Local mode does. Once the page has loaded, codes are generated on your device, and local data never needs a connection.</p></details>
+      <details><summary>Can I move my codes from another app?</summary><p>Yes. Scan the export QR code from Google Authenticator, or import a file of otpauth:// links, from Settings.</p></details>
     </div>
   </section>
 
-  <section class="band"><div class="cta"><h2>Ready? It takes about a minute.</h2><a class="btn btn-primary btn-lg" href="app.html">Get started</a></div></section>
+  <section class="band"><div class="cta"><div><h2>Keep your second factor yours.</h2><p class="muted">Create an account in under a minute.</p></div><a class="btn btn-primary btn-lg" href="app.html#signup">Create free account</a></div></section>
 </main>
-<footer class="site-footer"><span>Your data is locked on your device. Only you can open it.</span><nav><a href="index.html">Home</a><a href="security.html">Security</a></nav></footer>
+<footer class="site-footer"><span>Vault encrypts your data on your device before it’s stored.</span><nav><a href="index.html">Home</a><a href="app.html">Sign in</a><a href="app.html#signup">Create account</a><a href="security.html">Security</a></nav></footer>
 <script src="js/crypto.js"></script>
 <script src="js/totp.js"></script>
 <script src="js/demo.js"></script>

@@ -11,11 +11,10 @@
   };
 
   const S = {
-    mode: null,          // 'cloud' (Google account) | 'local' (no account)
-    email: null, dek: null, vault: null, cfg: null, cloud: true,
-    items: [], page: 'codes', lastActive: Date.now(), lastSync: 0, hiddenAt: 0,
-    rk: null, afterRk: null, tmpDek: null, tmpAuth: null, nonce: null, gisInit: false,
-    viewing: null, viewUrl: null, viewData: null, confirmRes: null, undecryptable: 0
+    mode: null,          // 'cloud' | 'local'
+    email: null, dek: null, wrappedDek: null,
+    items: [], page: 'codes', cloud: true, lastActive: Date.now(), lastSync: 0,
+    rk: null, viewing: null, viewUrl: null, confirmRes: null, undecryptable: 0
   };
   const backend = () => (S.mode === 'cloud' ? Api.items : Local.items);
   const byId = id => S.items.find(i => i.id === id);
@@ -23,7 +22,7 @@
   const MAX_NOTE_BYTES = 80000;
   const fmtSize = n => (n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
   const fmtDate = ms => new Date(ms).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  const friendly = e => (e && e.message === 'WRONG_SECRET' ? 'Incorrect passcode.' : (e && e.message) || 'Something went wrong.');
+  const friendly = e => (e && e.message === 'WRONG_SECRET' ? 'Incorrect password.' : (e && e.message) || 'Something went wrong.');
 
   /* ================= UI helpers ================= */
   let toastTimer = null;
@@ -85,16 +84,6 @@
   }
 
   /* ================= Auth screens ================= */
-  const Passkey = VaultPasskey;
-  const SECRET_SUPPORTED = !!(window.CSS && CSS.supports && (CSS.supports('-webkit-text-security', 'disc') || CSS.supports('text-security', 'disc')));
-  // Passcode fields are drawn as dots without being type=password (so browsers don't offer to save them).
-  // If a browser can't do that, fall back to a normal password field.
-  function maskInputs(root) {
-    $$('.secret', root).forEach(i => { i.classList.remove('show'); if (!SECRET_SUPPORTED) i.type = 'password'; });
-    $$('.pw button', root).forEach(b => { b.textContent = 'Show'; });
-  }
-  maskInputs(document);
-
   function setNotice(msg, kind) {
     const n = $('#auth-notice');
     n.hidden = !msg; n.textContent = msg || ''; n.className = 'notice' + (kind ? ' ' + kind : '');
@@ -103,216 +92,141 @@
     $('#app').hidden = true; $('#auth').hidden = false;
     $$('#auth [data-view]').forEach(s => { s.hidden = s.dataset.view !== view; });
     setNotice(notice, kind);
-    if (view === 'welcome') await prepareWelcome();
-    if (view === 'unlock') prepareUnlock();
-    if (view === 'setup') prepareSetup();
-    showProgress(view);
-    const first = $(`#auth [data-view="${view}"] input:not([type=hidden]):not([type=checkbox])`);
+    if (view === 'signin' || view === 'local-setup' || view === 'local-unlock') {
+      $$('#ls-alt, #lu-alt').forEach(el => { el.hidden = !S.cloud; });
+    }
+    if (view === 'signin') {
+      const has = await Local.hasProfile();
+      $('#btn-use-local').textContent = has ? 'Open data on this device' : 'Use on this device only';
+      const last = pref.get('email', '');
+      if (last && !$('#si-email').value) $('#si-email').value = last;
+    }
+    if (view === 'locked') { $('#locked-email').textContent = S.email; $('#lk-user').value = S.email; }
+    const first = $(`#auth [data-view="${view}"] input:not([type=hidden]):not([type=checkbox]):not([hidden])`);
     setTimeout(() => first && first.focus(), 30);
   }
 
-  // Small "Step 1 of 3" bar while someone is creating their vault.
-  function showProgress(view) {
-    const cloud = S.mode === 'cloud', pk = Passkey.supported();
-    const total = (cloud ? 2 : 1) + (pk ? 1 : 0);
-    const at = { 'setup': 1, 'recovery-key': 2, 'passkey-offer': cloud ? 3 : 2 }[view];
-    const box = $('#auth-steps');
-    box.hidden = !at;
-    if (!at) return;
-    $('#auth-steps-label').textContent = 'Step ' + Math.min(at, total) + ' of ' + total;
-    $('#auth-steps-bar').style.width = (Math.min(at, total) / total * 100) + '%';
+  const mailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  function checkNewPassword(pw, confirm) {
+    if (pw.length < 10) throw new Error('Use at least 10 characters for your password.');
+    if (pw !== confirm) throw new Error('The passwords don’t match.');
   }
 
-  async function prepareWelcome() {
-    const has = await Local.hasProfile();
-    $('#btn-use-local').textContent = has ? 'Open my vault' : 'Use on this device only';
-    const note = $('#g-note'), box = $('#g-btn');
-    note.hidden = true; box.innerHTML = '';
-    $('#g-wrap').hidden = !S.cloud; $('#welcome-sep').hidden = !S.cloud;
-    if (!S.cloud) return;
-    if (!S.cfg || !S.cfg.googleClientId) { note.textContent = 'Google sign-in isn’t ready yet. You can still use Vault on this device.'; note.hidden = false; return; }
-    renderGoogle();
+  async function startCloud(email, wrapped, dek) {
+    S.mode = 'cloud'; S.email = email; S.wrappedDek = wrapped; S.dek = dek; S.page = 'codes';
+    pref.set('mode', 'cloud'); pref.set('email', email);
+    await loadItems();
+    enterApp();
   }
 
-  // Google Identity Services: Google proves who you are. It is never the key to your data.
-  let gisLoad = null;
-  const loadGIS = () => (window.google && google.accounts && google.accounts.id) ? Promise.resolve()
-    : gisLoad || (gisLoad = new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = res;
-      s.onerror = () => { gisLoad = null; rej(new Error('Couldn’t load Google sign-in.')); };
-      document.head.appendChild(s);
-    }));
-  async function renderGoogle() {
-    const note = $('#g-note');
-    try { await loadGIS(); } catch (e) { note.textContent = friendly(e) + ' Check your connection or content blocker.'; note.hidden = false; return; }
-    if (!S.gisInit) {
-      S.nonce = C.b64.enc(C.rand(18)).replace(/[+/=]/g, 'x');
-      google.accounts.id.initialize({ client_id: S.cfg.googleClientId, callback: onGoogle, nonce: S.nonce });
-      S.gisInit = true;
-    }
-    const box = $('#g-btn'); box.innerHTML = '';
-    google.accounts.id.renderButton(box, { type: 'standard', theme: document.documentElement.dataset.theme === 'dark' ? 'filled_black' : 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', width: 340 });
-  }
-  async function onGoogle(resp) {
-    try {
-      toast('Signing in…');
-      await Api.req('POST', '/google', { credential: resp.credential, nonce: S.nonce });
-      await enterCloud();
-    } catch (e) { toast(friendly(e), true); }
-  }
-  async function enterCloud(notice) {
-    const sess = await Api.req('GET', '/session');
-    S.mode = 'cloud'; S.email = sess.email; S.vault = sess; S.page = 'codes';
-    pref.set('mode', 'cloud');
-    showAuth(sess.hasVault ? 'unlock' : 'setup', { notice });
-  }
-  async function enterLocal(notice, kind) {
-    const prof = await Local.getProfile();
-    S.mode = 'local'; S.email = null; S.page = 'codes';
-    S.vault = { passkey: prof && prof.passkey ? { credId: prof.passkey.credId, prfSalt: prof.passkey.prfSalt } : null };
-    pref.set('mode', 'local');
-    showAuth(prof ? 'unlock' : 'setup', { notice, kind });
+  async function signIn(form) {
+    const el = form.elements, email = C.normEmail(el.email.value), pw = el.password.value;
+    if (!mailOk(email) || !pw) throw new Error('Enter your email and password.');
+    const cr = await C.passwordCredentials(email, pw);
+    const r = await Api.req('POST', '/login', { email, authKey: cr.auth });
+    let dek;
+    try { dek = await C.unwrapDEK(r.wrappedDek, cr.kek); } catch { throw new Error('Your account data couldn’t be unlocked.'); }
+    form.reset();
+    await startCloud(r.email, r.wrappedDek, dek);
   }
 
-  function prepareUnlock() {
-    const cloud = S.mode === 'cloud', pk = Passkey.supported() && S.vault && S.vault.passkey;
-    $('#unlock-sub').textContent = cloud ? S.email : 'Saved on this device only';
-    $('#btn-unlock-passkey').hidden = !pk; $('#unlock-sep').hidden = !pk;
-    const b = $('#btn-unlock-out');
-    b.textContent = cloud ? 'Sign out' : 'Sign in with Google'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
-    b.hidden = !cloud && !S.cloud;
-  }
-  function prepareSetup() {
-    const cloud = S.mode === 'cloud';
-    $('#setup-sub').textContent = cloud ? 'Signed in as ' + S.email + '. Choose a passcode to lock your vault. You’ll type it each time you open Vault.'
-      : 'Your passcode locks the data saved on this device. You’ll type it each time you open Vault.';
-    $('#setup-warn').textContent = cloud ? 'Next you’ll get a recovery key. It’s your backup if you forget your passcode.'
-      : 'There’s no recovery option here. If you forget your passcode, your data is lost. Save a backup in Settings.';
-    const b = $('#btn-setup-out');
-    b.textContent = cloud ? 'Sign out' : 'Cancel'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
-  }
-
-  function checkNewPasscode(pc, confirm) {
-    if (pc.length < 10) throw new Error('Use at least 10 characters for your passcode.');
-    if (pc !== confirm) throw new Error('The passcodes don’t match.');
-  }
-  const openDek = async (wrapped, kek, extractable = false) => {
-    try { return await C.unwrapDEK(wrapped, kek, extractable); } catch { throw new Error('Incorrect passcode.'); }
-  };
-  const resetMeters = root => { $$('.meter i', root).forEach(i => { i.style.width = '0'; }); $$('.meter-label', root).forEach(l => { l.textContent = ''; }); };
-
-  function showRecoveryKey(rk, notice) {
+  async function signUp(form) {
+    const el = form.elements, email = C.normEmail(el.email.value), pw = el.password.value;
+    if (!mailOk(email)) throw new Error('Enter a valid email address.');
+    checkNewPassword(pw, el.confirm.value);
+    const pc = await C.passwordCredentials(email, pw);
+    const rk = C.generateRecoveryCode(), rc = await C.recoveryCredentials(email, rk);
+    const dek = await C.newDEK();
+    const wrapped = await C.wrapDEK(dek, pc.kek), rcWrapped = await C.wrapDEK(dek, rc.kek);
+    await Api.req('POST', '/register', { email, authKey: pc.auth, wrappedDek: wrapped, rcAuth: rc.auth, rcWrappedDek: rcWrapped });
+    S.mode = 'cloud'; S.email = email; S.wrappedDek = wrapped; S.items = []; S.page = 'codes';
+    S.dek = await C.unwrapDEK(wrapped, pc.kek);
+    pref.set('mode', 'cloud'); pref.set('email', email);
+    form.reset(); $$('.meter i', form).forEach(i => { i.style.width = '0'; }); $$('.meter-label', form).forEach(l => { l.textContent = ''; });
     S.rk = rk; $('#rk-code').textContent = rk; $('#rk-saved').checked = false; $('#rk-continue').disabled = true;
-    showAuth('recovery-key', { notice });
-  }
-
-  async function setupVault(form) {
-    const el = form.elements, pc = el['vault-new'].value;
-    checkNewPasscode(pc, el['vault-confirm'].value);
-    const salt = C.rand(16), cr = await C.passcodeCredentials(pc, salt), dek = await C.newDEK();
-    const wrapped = await C.wrapDEK(dek, cr.kek);
-    if (S.mode === 'cloud') {
-      const rk = C.generateRecoveryCode(), rc = await C.recoveryCredentials(rk);
-      await Api.req('PUT', '/vault', { pcSalt: C.b64.enc(salt), pcAuth: cr.auth, pcWrappedDek: wrapped, rcAuth: rc.auth, rcWrappedDek: await C.wrapDEK(dek, rc.kek) });
-      S.vault = { ...S.vault, hasVault: true, pcSalt: C.b64.enc(salt), passkey: null };
-      S.rk = rk;
-    } else {
-      await Local.setProfile({ salt: C.b64.enc(salt), wrappedDek: wrapped, created: Date.now() });
-      S.vault = { passkey: null };
-      try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch { /* optional */ }
-    }
-    S.dek = await C.unwrapDEK(wrapped, cr.kek);
-    S.tmpDek = dek; S.tmpAuth = cr.auth; S.items = []; S.page = 'codes';
-    form.reset(); resetMeters(form); maskInputs(form);
-    if (S.mode === 'cloud') { S.afterRk = afterSetup; showRecoveryKey(S.rk); } else afterSetup();
-  }
-  function afterSetup() { if (Passkey.supported()) showAuth('passkey-offer'); else finishSetup(); }
-  function finishSetup() { S.tmpDek = null; S.tmpAuth = null; enterApp(); }
-
-  // Wraps the data key with a new passkey and stores it (server for accounts, IndexedDB for local).
-  async function registerPasskey(extractableDek, pcAuth) {
-    const pk = await Passkey.create(S.mode === 'cloud' ? S.email : 'Vault (this device)');
-    const wrapped = await C.wrapDEK(extractableDek, await C.passkeyKey(pk.prfOut));
-    if (S.mode === 'cloud') await Api.req('POST', '/passkey', { pcAuth, credId: pk.credId, prfSalt: pk.prfSalt, wrappedDek: wrapped });
-    else await Local.setProfile({ ...(await Local.getProfile()), passkey: { credId: pk.credId, prfSalt: pk.prfSalt, wrappedDek: wrapped } });
-    S.vault = { ...S.vault, passkey: { credId: pk.credId, prfSalt: pk.prfSalt } };
-  }
-  async function removePasskey(pcAuth) {
-    if (S.mode === 'cloud') await Api.req('DELETE', '/passkey', { pcAuth });
-    else { const prof = await Local.getProfile(); delete prof.passkey; await Local.setProfile(prof); }
-    S.vault = { ...S.vault, passkey: null };
-  }
-
-  async function unlockPasscode(form) {
-    const pc = form.elements['vault-unlock'].value;
-    if (!pc) throw new Error('Enter your passcode.');
-    if (S.mode === 'cloud') {
-      const cr = await C.passcodeCredentials(pc, C.b64.dec(S.vault.pcSalt));
-      const r = await Api.req('POST', '/unlock', { method: 'passcode', pcAuth: cr.auth });
-      S.dek = await openDek(r.wrappedDek, cr.kek);
-    } else {
-      const prof = await Local.getProfile();
-      if (!prof) return showAuth('setup');
-      const cr = await C.passcodeCredentials(pc, C.b64.dec(prof.salt));
-      S.dek = await openDek(prof.wrappedDek, cr.kek);
-    }
-    form.reset(); maskInputs(form);
-    await loadItems();
-    enterApp();
-  }
-  async function unlockPasskey() {
-    const pk = S.vault && S.vault.passkey;
-    if (!pk) return;
-    const kek = await C.passkeyKey(await Passkey.evaluate(pk.credId, pk.prfSalt));
-    const wrapped = S.mode === 'cloud' ? (await Api.req('POST', '/unlock', { method: 'passkey' })).wrappedDek : (await Local.getProfile()).passkey.wrappedDek;
-    try { S.dek = await C.unwrapDEK(wrapped, kek); } catch { throw new Error('That passkey couldn’t unlock this vault. Use your passcode instead.'); }
-    await loadItems();
-    enterApp();
+    showAuth('recovery-key');
   }
 
   async function recoverAccount(form) {
-    const el = form.elements, pc = el['vault-new2'].value;
-    checkNewPasscode(pc, el['vault-confirm2'].value);
-    const rc = await C.recoveryCredentials(el['vault-recovery'].value);
-    const r = await Api.req('POST', '/recover/start', { rcAuth: rc.auth });
+    const el = form.elements, email = C.normEmail(el.email.value), pw = el.password.value;
+    if (!mailOk(email)) throw new Error('Enter a valid email address.');
+    checkNewPassword(pw, el.confirm.value);
+    const rc = await C.recoveryCredentials(email, el.key.value);
+    const r = await Api.req('POST', '/recover/start', { email, rcAuth: rc.auth });
     let dek;
-    try { dek = await C.unwrapDEK(r.rcWrappedDek, rc.kek, true); } catch { throw new Error('That recovery key is incorrect.'); }
-    const salt = C.rand(16), cr = await C.passcodeCredentials(pc, salt), rk = C.generateRecoveryCode(), rc2 = await C.recoveryCredentials(rk);
-    const wrapped = await C.wrapDEK(dek, cr.kek);
-    await Api.req('POST', '/recover/finish', { rcAuth: rc.auth, newPcSalt: C.b64.enc(salt), newPcAuth: cr.auth, newPcWrappedDek: wrapped, rcAuth2: rc2.auth, rcWrappedDek2: await C.wrapDEK(dek, rc2.kek) });
-    S.vault = { ...S.vault, pcSalt: C.b64.enc(salt), passkey: null };
-    S.dek = await C.unwrapDEK(wrapped, cr.kek); S.page = 'codes';
+    try { dek = await C.unwrapDEK(r.rcWrappedDek, rc.kek, true); } catch { throw new Error('The email or recovery key is incorrect.'); }
+    const pc = await C.passwordCredentials(email, pw);
+    const rk = C.generateRecoveryCode(), rc2 = await C.recoveryCredentials(email, rk);
+    const wrapped = await C.wrapDEK(dek, pc.kek);
+    await Api.req('POST', '/recover/finish', {
+      email, rcAuth: rc.auth, authKey: pc.auth, wrappedDek: wrapped, rcAuth2: rc2.auth, rcWrappedDek2: await C.wrapDEK(dek, rc2.kek)
+    });
+    S.mode = 'cloud'; S.email = email; S.wrappedDek = wrapped; S.page = 'codes'; S.dek = await C.unwrapDEK(wrapped, pc.kek);
+    pref.set('mode', 'cloud'); pref.set('email', email);
     await loadItems();
-    form.reset(); resetMeters(form); maskInputs(form);
-    S.afterRk = enterApp;
-    showRecoveryKey(rk, 'Your passcode was reset. Here is your new recovery key. Save it now, because the old one no longer works.');
+    form.reset();
+    S.rk = rk; $('#rk-code').textContent = rk; $('#rk-saved').checked = false; $('#rk-continue').disabled = true;
+    showAuth('recovery-key', { notice: 'Your password was reset. Here is your new recovery key. The old one no longer works.' });
+  }
+
+  async function unlockSession(form) {
+    const pw = form.elements.password.value;
+    if (!pw) throw new Error('Enter your password.');
+    const cr = await C.passwordCredentials(S.email, pw);
+    try { S.dek = await C.unwrapDEK(S.wrappedDek, cr.kek); } catch { throw new Error('Incorrect password.'); }
+    form.reset();
+    await loadItems();
+    enterApp();
+  }
+
+  async function localSetup(form) {
+    const pw = form.elements.password.value;
+    checkNewPassword(pw, form.elements.confirm.value);
+    const salt = C.rand(16), cr = await C.localCredentials(pw, salt), dek = await C.newDEK();
+    const wrapped = await C.wrapDEK(dek, cr.kek);
+    await Local.setProfile({ salt: C.b64.enc(salt), wrappedDek: wrapped, created: Date.now() });
+    S.mode = 'local'; S.email = null; S.wrappedDek = wrapped; S.items = []; S.page = 'codes';
+    S.dek = await C.unwrapDEK(wrapped, cr.kek);
+    pref.set('mode', 'local');
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch { /* optional */ }
+    form.reset(); $$('.meter i', form).forEach(i => { i.style.width = '0'; }); $$('.meter-label', form).forEach(l => { l.textContent = ''; });
+    enterApp();
+  }
+
+  async function localUnlock(form) {
+    const pw = form.elements.password.value, prof = await Local.getProfile();
+    if (!prof) return showAuth('local-setup');
+    const cr = await C.localCredentials(pw, C.b64.dec(prof.salt));
+    try { S.dek = await C.unwrapDEK(prof.wrappedDek, cr.kek); } catch { throw new Error('Incorrect password.'); }
+    S.mode = 'local'; S.email = null; S.wrappedDek = prof.wrappedDek;
+    pref.set('mode', 'local');
+    form.reset();
+    await loadItems();
+    enterApp();
   }
 
   /* ================= Session ================= */
   function wipeMemory() {
-    S.dek = null; S.items = []; S.viewing = null; S.rk = null; S.tmpDek = null; S.tmpAuth = null; S.afterRk = null;
+    S.dek = null; S.items = []; S.viewing = null; S.rk = null;
     T.clearCache(); stopTicker(); stopScan();
     if (S.viewUrl) { URL.revokeObjectURL(S.viewUrl); S.viewUrl = null; }
     $$('dialog[open]').forEach(d => d.close());
     ['#code-list', '#file-list', '#view-content', '#rk-code', '#rkd-code'].forEach(s => { $(s).innerHTML = ''; });
-    $$('#auth input').forEach(i => { if (i.type !== 'checkbox' && i.type !== 'hidden') i.value = ''; });
   }
-  // Locking drops every key from memory. Unlocking always needs the passcode or passkey again.
   function lock(reason) {
     if (!S.dek) return;
     wipeMemory();
-    showAuth('unlock', { notice: reason });
+    if (S.mode === 'cloud') showAuth('locked', { notice: reason });
+    else showAuth('local-unlock', { notice: reason });
   }
   async function signOut() {
     try { if (S.mode === 'cloud') await Api.req('POST', '/logout', {}); } catch { /* already signed out */ }
-    try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch { /* optional */ }
-    wipeMemory(); S.mode = null; S.email = null; S.vault = null; pref.set('mode', '');
-    showAuth('welcome');
+    wipeMemory(); S.mode = null; S.email = null; S.wrappedDek = null; pref.set('mode', '');
+    showAuth('signin');
   }
   function authLost() {
-    wipeMemory(); S.mode = null; S.email = null; S.vault = null;
-    showAuth('welcome', { notice: 'You were signed out. Please sign in with Google again.', kind: 'warn' });
+    wipeMemory(); S.email = null; S.wrappedDek = null;
+    showAuth('signin', { notice: 'Your session expired. Sign in again.', kind: 'warn' });
   }
 
   async function loadItems() {
@@ -362,10 +276,10 @@
     $('#auth').hidden = true; $('#app').hidden = false;
     S.lastActive = Date.now();
     const cloud = S.mode === 'cloud';
-    $('#acct-kind').textContent = cloud ? 'Signed in with Google' : 'No account';
+    $('#acct-kind').textContent = cloud ? 'Cloud account' : 'Local · not synced';
     $('#acct-name').textContent = cloud ? S.email : 'This device';
     const b = $('#btn-signout');
-    b.textContent = cloud ? 'Sign out' : 'Sign in with Google'; b.dataset.act = cloud ? 'signout' : 'goto-welcome';
+    b.textContent = cloud ? 'Sign out' : 'Use account'; b.dataset.act = cloud ? 'signout' : 'goto-signin';
     b.hidden = !cloud && !S.cloud;
     $('#set-autolock').value = pref.get('autolock', '5');
     $('#set-theme').value = VaultTheme.get();
@@ -397,7 +311,7 @@
       .sort((a, b) => (a.issuer || a.name).localeCompare(b.issuer || b.name, undefined, { sensitivity: 'base' }));
     const el = $('#code-list');
     if (!all.length) {
-      el.innerHTML = `<li class="empty">${icon('shield')}<h2>No codes yet</h2><p>Scan the QR code a website shows you.</p><button class="btn btn-primary" type="button" data-act="add-code">${icon('plus')}Add a code</button></li>`;
+      el.innerHTML = `<li class="empty">${icon('shield')}<h2>No codes yet</h2><p>Add the 2FA codes for your accounts. Scan the QR code a service shows you, or paste its secret key.</p><button class="btn btn-primary" type="button" data-act="add-code">${icon('plus')}Add your first code</button></li>`;
       return;
     }
     if (!list.length) { el.innerHTML = `<li class="empty"><p>No codes match “${esc(q)}”.</p></li>`; return; }
@@ -448,7 +362,7 @@
     const list = all.filter(i => !q || ((i.title || '') + ' ' + (i.body || '')).toLowerCase().includes(q)).sort((a, b) => b.updatedAt - a.updatedAt);
     const el = $('#file-list');
     if (!all.length) {
-      el.innerHTML = `<li class="empty">${icon('file')}<h2>Nothing here yet</h2><p>Keep private notes and files here.</p><div class="btn-row center"><button class="btn btn-primary" type="button" data-act="new-note">${icon('plus')}Add note</button><button class="btn btn-outline" type="button" data-act="upload">${icon('upload')}Add file</button></div></li>`;
+      el.innerHTML = `<li class="empty">${icon('file')}<h2>No notes or files yet</h2><p>Keep recovery codes, passwords, IDs and documents encrypted alongside your 2FA codes.</p><div class="btn-row center"><button class="btn btn-primary" type="button" data-act="new-note">${icon('plus')}New note</button><button class="btn btn-outline" type="button" data-act="upload">${icon('upload')}Upload file</button></div></li>`;
       return;
     }
     if (!list.length) { el.innerHTML = `<li class="empty"><p>Nothing matches “${esc(q)}”.</p></li>`; return; }
@@ -469,10 +383,6 @@
   function renderSettings() {
     $$('[data-only]').forEach(el => { el.hidden = el.dataset.only !== S.mode; });
     $('#set-email').textContent = S.email || '';
-    const has = !!(S.vault && S.vault.passkey);
-    $('#row-passkey').hidden = !Passkey.supported();
-    $('#passkey-status').textContent = has ? 'Set up. Unlock with your fingerprint, face or key.' : 'Not set up. Unlock with your fingerprint or face.';
-    $('#btn-passkey').textContent = has ? 'Remove passkey' : 'Add passkey';
   }
 
   /* ================= Codes ================= */
@@ -572,7 +482,7 @@
   /* ================= Notes & files ================= */
   function openNoteDialog(id) {
     const it = id ? byId(id) : null, isFile = !!it && it.type === 'file';
-    $('#note-heading').textContent = !it ? 'Add note' : isFile ? 'Rename file' : 'Edit note';
+    $('#note-heading').textContent = !it ? 'New note' : isFile ? 'Rename file' : 'Edit note';
     $('#note-id').value = it ? it.id : '';
     $('#note-title').value = it ? it.title || '' : '';
     $('#note-body').value = it && !isFile ? it.body || '' : '';
@@ -597,7 +507,7 @@
   }
   async function uploadFile(file) {
     if (!file) return;
-    if (file.size > maxFile()) { toast('Files can be up to ' + fmtSize(maxFile()) + ' with ' + (S.mode === 'cloud' ? 'a Google account' : 'no account') + '.', true); return; }
+    if (file.size > maxFile()) { toast('Files can be up to ' + fmtSize(maxFile()) + ' in ' + (S.mode === 'cloud' ? 'a cloud account' : 'local mode') + '.', true); return; }
     toast('Encrypting…');
     await persist({ type: 'file', title: file.name, mime: file.type || 'application/octet-stream', size: file.size }, new Uint8Array(await file.arrayBuffer()));
     render(); toast('File encrypted and saved.');
@@ -652,52 +562,39 @@
   }
 
   /* ================= Settings ================= */
-  // Re-checks the passcode (server-throttled for accounts) and returns the data key in extractable
-  // form so it can be re-wrapped, together with the passcode proof.
-  async function reauthWith(pc) {
-    if (S.mode === 'cloud') {
-      const cr = await C.passcodeCredentials(pc, C.b64.dec(S.vault.pcSalt));
-      const r = await Api.req('POST', '/unlock', { method: 'passcode', pcAuth: cr.auth });
-      return { cr, dek: await openDek(r.wrappedDek, cr.kek, true) };
-    }
-    const prof = await Local.getProfile(), cr = await C.passcodeCredentials(pc, C.b64.dec(prof.salt));
-    return { cr, prof, dek: await openDek(prof.wrappedDek, cr.kek, true) };
-  }
   async function reauth(title, help, ok = 'Continue', danger = false) {
-    const pc = await askSecret({ title, help, label: 'Passcode', ok, danger });
-    if (pc === null) return null;
-    toast('Checking passcode…');
-    return reauthWith(pc);
-  }
-
-  async function changePasscode() {
-    const cur = $('#pw-current').value, next = $('#pw-new').value;
-    if (!cur) throw new Error('Enter your current passcode.');
-    checkNewPasscode(next, $('#pw-confirm').value);
-    const r = await reauthWith(cur);
-    const salt = C.rand(16), nw = await C.passcodeCredentials(next, salt), wrapped = await C.wrapDEK(r.dek, nw.kek);
+    const pw = await askSecret({ title, help, ok, danger });
+    if (pw === null) return null;
+    toast('Checking password…');
     if (S.mode === 'cloud') {
-      await Api.req('POST', '/passcode', { pcAuth: r.cr.auth, newPcSalt: C.b64.enc(salt), newPcAuth: nw.auth, newPcWrappedDek: wrapped });
-      S.vault = { ...S.vault, pcSalt: C.b64.enc(salt) };
-    } else await Local.setProfile({ ...r.prof, salt: C.b64.enc(salt), wrappedDek: wrapped });
-    $('#dlg-passcode').close();
-    toast('Passcode changed.');
+      const cr = await C.passwordCredentials(S.email, pw);
+      let dek; try { dek = await C.unwrapDEK(S.wrappedDek, cr.kek, true); } catch { throw new Error('Incorrect password.'); }
+      return { cr, dek };
+    }
+    const prof = await Local.getProfile(), cr = await C.localCredentials(pw, C.b64.dec(prof.salt));
+    let dek; try { dek = await C.unwrapDEK(prof.wrappedDek, cr.kek, true); } catch { throw new Error('Incorrect password.'); }
+    return { cr, dek };
   }
 
-  async function togglePasskey() {
-    if (S.vault && S.vault.passkey) {
-      if (!await confirmDialog({ title: 'Remove passkey?', body: 'You’ll unlock Vault with your passcode only. You can add a passkey again at any time.', ok: 'Remove passkey', danger: true })) return;
-      const r = await reauth('Remove passkey', 'Enter your passcode to confirm.', 'Remove passkey', true);
-      if (!r) return;
-      await removePasskey(r.cr.auth);
-      toast('Passkey removed.');
+  async function changePassword(form) {
+    const cur = $('#pw-current').value, next = $('#pw-new').value;
+    if (!cur) throw new Error('Enter your current password.');
+    checkNewPassword(next, $('#pw-confirm').value);
+    if (S.mode === 'cloud') {
+      const old = await C.passwordCredentials(S.email, cur);
+      let dek; try { dek = await C.unwrapDEK(S.wrappedDek, old.kek, true); } catch { throw new Error('Your current password is incorrect.'); }
+      const nw = await C.passwordCredentials(S.email, next), wrapped = await C.wrapDEK(dek, nw.kek);
+      await Api.req('POST', '/password', { authKey: old.auth, newAuthKey: nw.auth, wrappedDek: wrapped });
+      S.wrappedDek = wrapped; S.dek = await C.unwrapDEK(wrapped, nw.kek);
     } else {
-      const r = await reauth('Add a passkey', 'Enter your passcode, then follow your device’s prompt to create a passkey.');
-      if (!r) return;
-      await registerPasskey(r.dek, r.cr.auth);
-      toast('Passkey added.');
+      const prof = await Local.getProfile(), old = await C.localCredentials(cur, C.b64.dec(prof.salt));
+      let dek; try { dek = await C.unwrapDEK(prof.wrappedDek, old.kek, true); } catch { throw new Error('Your current password is incorrect.'); }
+      const salt = C.rand(16), nw = await C.localCredentials(next, salt), wrapped = await C.wrapDEK(dek, nw.kek);
+      await Local.setProfile({ ...prof, salt: C.b64.enc(salt), wrappedDek: wrapped });
+      S.wrappedDek = wrapped; S.dek = await C.unwrapDEK(wrapped, nw.kek);
     }
-    renderSettings();
+    $('#dlg-password').close();
+    toast(S.mode === 'cloud' ? 'Password changed. Other devices were signed out.' : 'Password changed.');
   }
 
   function showRecoveryDialog(rk) {
@@ -705,31 +602,31 @@
     $('#dlg-recovery').showModal();
   }
   async function newRecoveryKey() {
-    const r = await reauth('New recovery key', 'Enter your passcode to create a new recovery key. Your current one will stop working.');
+    const r = await reauth('New recovery key', 'Enter your password to create a new recovery key. Your current one will stop working.');
     if (!r) return;
-    const rk = C.generateRecoveryCode(), rc = await C.recoveryCredentials(rk);
-    await Api.req('POST', '/recovery', { pcAuth: r.cr.auth, rcAuth: rc.auth, rcWrappedDek: await C.wrapDEK(r.dek, rc.kek) });
+    const rk = C.generateRecoveryCode(), rc = await C.recoveryCredentials(S.email, rk);
+    await Api.req('POST', '/recovery', { authKey: r.cr.auth, rcAuth: rc.auth, rcWrappedDek: await C.wrapDEK(r.dek, rc.kek) });
     showRecoveryDialog(rk);
   }
   async function deleteAccount() {
-    const r = await reauth('Delete account', 'This permanently deletes your vault and everything in it. Enter your passcode to confirm.', 'Delete account', true);
+    const r = await reauth('Delete account', 'This permanently deletes your account and everything in it. Enter your password to confirm.', 'Delete account', true);
     if (!r) return;
-    await Api.req('DELETE', '/account', { pcAuth: r.cr.auth });
-    wipeMemory(); S.mode = null; S.email = null; S.vault = null; pref.set('mode', '');
-    showAuth('welcome', { notice: 'Account deleted.' });
+    await Api.req('DELETE', '/account', { authKey: r.cr.auth });
+    wipeMemory(); S.mode = null; S.email = null; S.wrappedDek = null; pref.set('mode', '');
+    showAuth('signup', { notice: 'Your account was deleted.' });
   }
   async function deleteLocal() {
     if (!await confirmDialog({ title: 'Delete local data?', body: 'Everything Vault stores in this browser will be erased. This can’t be undone. Export a backup first if you might need it.', ok: 'Delete everything', danger: true })) return;
     await Local.wipe();
-    wipeMemory(); S.mode = null; S.vault = null; pref.set('mode', '');
-    showAuth('welcome', { notice: 'Everything deleted.' });
+    wipeMemory(); S.mode = null; S.wrappedDek = null; pref.set('mode', '');
+    showAuth('local-setup', { notice: 'Local data deleted.' });
   }
 
   /* ---------- export / import ---------- */
   async function exportBackup() {
     const pass = await askSecret({
       title: 'Export backup', label: 'Backup passphrase (optional)', ok: 'Download', optional: true,
-      help: 'Choose a passphrase to lock the backup file. If you leave it empty, the file will not be locked.'
+      help: 'Protect the backup with a passphrase. Leave it empty to download a plain, unencrypted file.'
     });
     if (pass === null) return;
     if (pass === '' && !await confirmDialog({ title: 'Download without encryption?', body: 'The file will contain your 2FA secrets and notes in plain text. Anyone who gets it can read them. Store it somewhere safe and delete it when you’re done.', ok: 'Download anyway', danger: true })) return;
@@ -856,33 +753,13 @@
 
   /* ================= Event wiring ================= */
   const actions = {
-    'toggle-pw': t => {
-      const i = t.parentElement.querySelector('input'), isSecret = i.classList.contains('secret');
-      const showing = isSecret ? i.classList.contains('show') : i.type === 'text';
-      if (isSecret) { i.classList.toggle('show', !showing); if (!SECRET_SUPPORTED) i.type = showing ? 'password' : 'text'; }
-      else i.type = showing ? 'password' : 'text';
-      t.textContent = showing ? 'Show' : 'Hide';
-    },
-    'use-local': () => enterLocal(),
-    'goto-welcome': () => { wipeMemory(); S.mode = null; S.email = null; S.vault = null; showAuth('welcome'); },
-    'unlock-passkey': unlockPasskey,
-    'forgot': async () => {
-      if (S.mode === 'cloud') return showAuth('recover');
-      if (await confirmDialog({ title: 'Forgot your passcode?', body: 'Data on this device can’t be recovered without your passcode or passkey. You can erase it and start over, then restore from a backup if you have one.', ok: 'Erase and start over', danger: true })) {
-        await Local.wipe(); S.mode = null; S.vault = null; pref.set('mode', '');
-        showAuth('welcome', { notice: 'Everything deleted.' });
-      }
-    },
-    'back-unlock': () => showAuth('unlock'),
-    'pk-add-now': async () => {
-      const err = $('#pko-error'); err.hidden = true;
-      try { await registerPasskey(S.tmpDek, S.tmpAuth); finishSetup(); toast('Passkey added.'); }
-      catch (e) { err.textContent = friendly(e); err.hidden = false; }
-    },
-    'pk-skip': finishSetup,
+    'show-view': t => showAuth(t.dataset.to),
+    'toggle-pw': t => { const i = t.parentElement.querySelector('input'), show = i.type === 'password'; i.type = show ? 'text' : 'password'; t.textContent = show ? 'Hide' : 'Show'; },
+    'use-local': async () => showAuth((await Local.hasProfile()) ? 'local-unlock' : 'local-setup'),
+    'goto-signin': () => { lock(); showAuth('signin'); },
     'copy-rk': () => copyText(S.rk, 'Recovery key copied.'),
-    'download-rk': () => download(new Blob(['Vault recovery key\r\nAccount: ' + (S.email || '') + '\r\n\r\n' + S.rk + '\r\n\r\nKeep this somewhere safe. With your Google sign-in it is the only way to reset your passcode.\r\n'], { type: 'text/plain' }), 'vault-recovery-key.txt'),
-    'rk-continue': () => { S.rk = null; $('#rk-code').textContent = ''; const f = S.afterRk; S.afterRk = null; if (f) f(); },
+    'download-rk': () => download(new Blob(['Vault recovery key\r\nAccount: ' + (S.email || '') + '\r\n\r\n' + S.rk + '\r\n\r\nKeep this somewhere safe. It is the only way to reset your password.\r\n'], { type: 'text/plain' }), 'vault-recovery-key.txt'),
+    'rk-continue': () => { S.rk = null; $('#rk-code').textContent = ''; loadItems().then(enterApp).catch(handleError); },
     'lock': () => lock(),
     'signout': signOut,
     'nav': t => navigate(t.dataset.page),
@@ -902,13 +779,12 @@
     'view-download': () => { if (S.viewData) download(S.viewData.blob, S.viewing.title || 'download'); },
     'confirm-yes': () => { const r = S.confirmRes; S.confirmRes = null; $('#dlg-confirm').close(); if (r) r(true); },
     'confirm-no': () => { $('#dlg-confirm').close(); },
-    'change-passcode': () => $('#dlg-passcode').showModal(),
-    'passkey-toggle': togglePasskey,
+    'change-password': () => $('#dlg-password').showModal(),
     'new-recovery': newRecoveryKey,
     'signout-all': async () => {
       if (!await confirmDialog({ title: 'Sign out everywhere?', body: 'Every device, including this one, will be signed out.', ok: 'Sign out everywhere' })) return;
       await Api.req('POST', '/logout-all', {});
-      wipeMemory(); S.mode = null; S.email = null; S.vault = null; showAuth('welcome');
+      wipeMemory(); S.mode = null; S.email = null; S.wrappedDek = null; showAuth('signin');
     },
     'export': exportBackup,
     'import': () => $('#import-input').click(),
@@ -924,8 +800,9 @@
   });
 
   const forms = {
-    setup: ['Creating…', setupVault], unlock: ['Unlocking…', unlockPasscode], recover: ['Resetting…', recoverAccount],
-    code: ['Saving…', saveCode], note: ['Saving…', saveNote], passcode: ['Changing…', changePasscode],
+    signin: ['Signing in…', signIn], signup: ['Creating account…', signUp], recover: ['Resetting…', recoverAccount],
+    unlock: ['Unlocking…', unlockSession], 'local-setup': ['Setting up…', localSetup], 'local-unlock': ['Unlocking…', localUnlock],
+    code: ['Saving…', saveCode], note: ['Saving…', saveNote], password: ['Changing…', changePassword],
     prompt: ['…', async () => {
       const v = $('#prompt-input').value;
       if (!v && !promptOptional) return;
@@ -962,7 +839,8 @@
     if (!(d instanceof HTMLDialogElement)) return;
     $$('form', d).forEach(f => f.reset());
     $$('.form-error', d).forEach(x => { if (x.id !== 'x') x.hidden = true; });
-    maskInputs(d);
+    $$('.pw input', d).forEach(i => { i.type = 'password'; });
+    $$('.pw button', d).forEach(b => { b.textContent = 'Show'; });
     $$('.meter i', d).forEach(i => { i.style.width = '0'; });
     $$('.meter-label', d).forEach(l => { l.textContent = ''; });
     if (d.id === 'dlg-view') {
@@ -979,40 +857,39 @@
 
   // Auto-lock and background sync
   ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(ev => addEventListener(ev, () => { S.lastActive = Date.now(); }, { passive: true }));
-  const autolockMinutes = () => parseInt(pref.get('autolock', '5'), 10);
-  const LEAVE_GRACE_MS = 10000;
-  function checkAutolock() {
+  setInterval(() => {
     if (!S.dek) return;
-    const m = autolockMinutes();
-    if (m === 0) { if (document.hidden && Date.now() - S.hiddenAt > LEAVE_GRACE_MS) lock('Locked because you left this tab.'); }
-    else if (Date.now() - S.lastActive > m * 60000) lock('Locked after ' + m + ' minute' + (m === 1 ? '' : 's') + ' of inactivity.');
-  }
-  setInterval(checkAutolock, 5000);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { S.hiddenAt = Date.now(); setTimeout(checkAutolock, LEAVE_GRACE_MS + 200); }
-    else { checkAutolock(); refresh(); }
-  });
+    const m = parseInt(pref.get('autolock', '5'), 10);
+    if (m > 0 && Date.now() - S.lastActive > m * 60000) lock('Locked after ' + m + ' minute' + (m === 1 ? '' : 's') + ' of inactivity.');
+  }, 5000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
   addEventListener('focus', refresh);
 
   /* ================= Start ================= */
-  async function probeServer() {
+  async function probeSession() {
     try {
-      const c = await fetch('/api/config', { credentials: 'same-origin', cache: 'no-store' });
-      if (!(c.headers.get('content-type') || '').includes('application/json') || !c.ok) return { available: false };
-      const cfg = await c.json();
       const r = await fetch('/api/session', { credentials: 'same-origin', cache: 'no-store' });
-      const session = r.ok && (r.headers.get('content-type') || '').includes('application/json') ? await r.json() : null;
-      return { available: true, cfg, session };
+      if (!(r.headers.get('content-type') || '').includes('application/json')) return { available: false };
+      if (r.status === 401) return { available: true, session: null };
+      if (!r.ok) return { available: r.status < 500, session: null };
+      return { available: true, session: await r.json() };
     } catch { return { available: false }; }
   }
   async function init() {
-    const hash = location.hash.slice(1), probe = await probeServer();
-    S.cloud = probe.available; S.cfg = probe.cfg || null;
+    const hash = location.hash.slice(1), probe = await probeSession();
+    S.cloud = probe.available;
     const hasLocal = await Local.hasProfile();
-    if (S.cloud && probe.session) return enterCloud();
-    if (!S.cloud) return enterLocal('Accounts aren’t available right now, so Vault is running in local mode on this device.', 'warn');
-    if (hash === 'local' || (pref.get('mode', '') === 'local' && hasLocal)) return enterLocal();
-    showAuth('welcome');
+    if (probe.session) {
+      S.mode = 'cloud'; S.email = probe.session.email; S.wrappedDek = probe.session.wrappedDek;
+      return showAuth('locked');
+    }
+    if (!S.cloud) {
+      return showAuth(hasLocal ? 'local-unlock' : 'local-setup', { notice: 'Accounts aren’t available right now, so Vault is running in local mode on this device.', kind: 'warn' });
+    }
+    if (hash === 'local') return showAuth(hasLocal ? 'local-unlock' : 'local-setup');
+    if (hash === 'signup') return showAuth('signup');
+    if (pref.get('mode', '') === 'local' && hasLocal) return showAuth('local-unlock');
+    showAuth('signin');
   }
   init();
 })();

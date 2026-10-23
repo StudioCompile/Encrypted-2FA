@@ -1,15 +1,12 @@
 // Cloudflare Worker entry: serves the static site from ./public and the JSON API under /api.
 import { onRequest as middleware } from './api/_middleware.js';
 import { SCHEMA } from './schema.js';
-import * as config from './api/config.js';
-import * as google from './api/google.js';
-import * as vault from './api/vault.js';
-import * as unlock from './api/unlock.js';
-import * as passcode from './api/passcode.js';
-import * as passkey from './api/passkey.js';
+import * as register from './api/register.js';
+import * as login from './api/login.js';
 import * as session from './api/session.js';
 import * as logout from './api/logout.js';
 import * as logoutAll from './api/logout-all.js';
+import * as password from './api/password.js';
 import * as recovery from './api/recovery.js';
 import * as recoverStart from './api/recover/start.js';
 import * as recoverFinish from './api/recover/finish.js';
@@ -19,8 +16,8 @@ import * as item from './api/items/[id].js';
 import * as itemFile from './api/items/[id]/file.js';
 
 const exact = {
-  '/api/config': config, '/api/google': google, '/api/session': session, '/api/vault': vault, '/api/unlock': unlock,
-  '/api/passcode': passcode, '/api/passkey': passkey, '/api/logout': logout, '/api/logout-all': logoutAll, '/api/recovery': recovery,
+  '/api/register': register, '/api/login': login, '/api/session': session, '/api/logout': logout,
+  '/api/logout-all': logoutAll, '/api/password': password, '/api/recovery': recovery,
   '/api/recover/start': recoverStart, '/api/recover/finish': recoverFinish, '/api/account': account, '/api/items': items
 };
 

@@ -1,12 +1,12 @@
 'use strict';
 /*
- * Vault crypto. Everything here runs in the browser; the server never sees a passcode, an
- * encryption key, or any plaintext. Nothing secret is ever written to storage.
+ * Vault crypto. Everything here runs in the browser; the server never sees a password,
+ * an encryption key, or any plaintext.
  *
- *   data key (DEK): random AES-256-GCM key that encrypts every item. It is stored only wrapped:
- *     - by the passcode:  passcode --PBKDF2-SHA256 (600k)--> master --HKDF--> wrapping key + proof key
- *     - by a passkey:     authenticator PRF output (hardware-bound, needs your biometric/PIN) --HKDF--> wrapping key
- *     - by the recovery key (cloud accounts)
+ *   password ──PBKDF2-SHA256 (600k)──▶ master ──HKDF──▶ KEK (wraps the data key)
+ *                                              └─HKDF──▶ auth key (sent to the server, hashed again there)
+ *   recovery code ─────────────HKDF──▶ recovery KEK / recovery auth key
+ *   data key (DEK): random AES-256-GCM key. Wrapped once by the password KEK and once by the recovery KEK.
  *   every item: AES-GCM under the DEK, with the item id bound in as additional data.
  */
 (function (g) {
@@ -63,25 +63,27 @@
 
   /* ---------- key derivation ---------- */
   async function sha256(...parts) { return new Uint8Array(await subtle().digest('SHA-256', concat(...parts))); }
+  const normEmail = e => String(e).trim().toLowerCase();
+  const accountSalt = email => sha256(enc.encode('vault/salt/v1:' + normEmail(email)));
+
   async function stretch(password, salt, iterations = KDF_ITERATIONS) {
     const base = await subtle().importKey('raw', enc.encode(String(password).normalize('NFKC')), 'PBKDF2', false, ['deriveBits']);
     return new Uint8Array(await subtle().deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, base, 256));
   }
-  const ZERO = new Uint8Array(32);
-  async function expand(master, label) {
+  async function expand(master, salt, label) {
     const base = await subtle().importKey('raw', master, 'HKDF', false, ['deriveKey', 'deriveBits']);
     const kek = await subtle().deriveKey(
-      { name: 'HKDF', hash: 'SHA-256', salt: ZERO, info: enc.encode('vault/kek/v1/' + label) },
+      { name: 'HKDF', hash: 'SHA-256', salt, info: enc.encode('vault/kek/v1/' + label) },
       base, { name: 'AES-GCM', length: 256 }, false, ['wrapKey', 'unwrapKey']);
     const auth = await subtle().deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: ZERO, info: enc.encode('vault/auth/v1/' + label) }, base, 256);
+      { name: 'HKDF', hash: 'SHA-256', salt, info: enc.encode('vault/auth/v1/' + label) }, base, 256);
     return { kek, auth: b64.enc(auth) };
   }
 
-  // passcode -> { kek, auth }. `auth` is a proof the server can check without learning the passcode.
-  const passcodeCredentials = async (passcode, salt) => expand(await stretch(passcode, salt), 'passcode');
-  // passkey PRF output (32 bytes from the authenticator) -> wrapping key
-  const passkeyKey = async prfOut => (await expand(new Uint8Array(prfOut), 'passkey')).kek;
+  const passwordCredentials = async (email, password) =>
+    expand(await stretch(password, await accountSalt(email)), new Uint8Array(32), 'password');
+  const localCredentials = async (password, salt) =>
+    expand(await stretch(password, salt), new Uint8Array(32), 'local');
 
   /* ---------- recovery code: 160 random bits shown as 8 groups of 4 ---------- */
   function generateRecoveryCode() {
@@ -92,7 +94,9 @@
     if (c.length !== 32) throw new Error('That recovery key doesn’t look right. It has 32 letters and numbers.');
     return c;
   }
-  const recoveryCredentials = async code => expand(base32Decode(normalizeRecoveryCode(code)), 'recovery');
+  async function recoveryCredentials(email, code) {
+    return expand(base32Decode(normalizeRecoveryCode(code)), await accountSalt(email), 'recovery');
+  }
 
   /* ---------- data key ---------- */
   const newDEK = () => subtle().generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
@@ -146,8 +150,8 @@
   }
 
   g.VaultCrypto = {
-    KDF_ITERATIONS, b64, rand, uid, concat, base32Decode, base32Encode, sha256,
-    passcodeCredentials, passkeyKey, recoveryCredentials, generateRecoveryCode, normalizeRecoveryCode,
+    KDF_ITERATIONS, b64, rand, uid, concat, base32Decode, base32Encode, sha256, normEmail,
+    passwordCredentials, localCredentials, recoveryCredentials, generateRecoveryCode, normalizeRecoveryCode,
     newDEK, wrapDEK, unwrapDEK, seal, open, sealJSON, openJSON, sealFile, openFile, backupKey, scorePassword, stretch
   };
 })(globalThis);
